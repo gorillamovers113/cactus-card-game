@@ -1059,16 +1059,30 @@ function returnToLobbyCtl(){ closeModal(); if(ME.role==="host"){ G.started=false
 // ---- juice / animation helpers ----
 const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 function rectOf(el){ return el?el.getBoundingClientRect():null; }
+let pendingPlayOrigin=null;
 function flyToDiscard(type){
   if(REDUCE) return; const dEl=$("discardSlot"); const dr=rectOf(dEl); if(!dr)return;
   const tx=dr.left+dr.width/2-35, ty=dr.top+dr.height/2-49; const scale=Math.max(.5,dr.width/70);
+  // start from the played card's spot in the hand if we captured it, else drop from above
+  let sx, sy, fromHand=false;
+  if(pendingPlayOrigin && (Date.now()-pendingPlayOrigin.t)<2600){
+    sx=pendingPlayOrigin.left+pendingPlayOrigin.width/2-35; sy=pendingPlayOrigin.top+pendingPlayOrigin.height/2-49; fromHand=true;
+  } else { sx=tx; sy=ty-175; }
+  pendingPlayOrigin=null;
+  const spin = (Math.random()<0.5?-1:1) * (fromHand? (360+(Math.random()*180|0)) : 180); // full tumble from hand
+  const dur = fromHand?620:440;
   const fly=document.createElement("div"); fly.className="flycard";
   fly.innerHTML=`<div class="fi"><div class="ff back"></div><div class="ff front">${cardHTML({id:-2,t:type})}</div></div>`;
-  fly.style.left=tx+"px"; fly.style.top=(ty-175)+"px"; document.body.appendChild(fly);
-  fly.animate([{transform:`translateY(0) scale(.6)`},{transform:`translateY(${175}px) scale(${scale})`}],{duration:440,easing:"cubic-bezier(.3,.75,.35,1)",fill:"forwards"});
-  fly.querySelector(".fi").animate([{transform:"rotateY(0deg)"},{transform:"rotateY(180deg)"}],{duration:440,easing:"ease-out",fill:"forwards"});
+  fly.style.left=sx+"px"; fly.style.top=sy+"px"; document.body.appendChild(fly);
+  const dx=tx-sx, dy=ty-sy, lift=fromHand?-70:0;
+  fly.animate([
+    {transform:`translate(0,0) rotate(0deg) scale(${fromHand?1.05:.6})`, offset:0},
+    {transform:`translate(${dx*0.5}px,${dy*0.5+lift}px) rotate(${(spin*0.55)|0}deg) scale(${fromHand?1.12:.8})`, offset:0.55},
+    {transform:`translate(${dx}px,${dy}px) rotate(${spin}deg) scale(${scale})`, offset:1}
+  ],{duration:dur,easing:"cubic-bezier(.25,.65,.3,1)",fill:"forwards"});
+  fly.querySelector(".fi").animate([{transform:"rotateY(0deg)"},{transform:"rotateY(180deg)"}],{duration:dur,easing:"ease-out",fill:"forwards"});
   sfx("flip");
-  setTimeout(()=>{ fly.remove(); if(dEl){dEl.classList.add("discard-glow"); setTimeout(()=>dEl.classList.remove("discard-glow"),850);} },450);
+  setTimeout(()=>{ fly.remove(); if(dEl){dEl.classList.add("discard-glow"); setTimeout(()=>dEl.classList.remove("discard-glow"),850);} },dur+20);
 }
 function chipFlyTo(targetEl,count){
   if(REDUCE||!targetEl) return; const srcEl=document.querySelector(".pilecard.point"); const sr=rectOf(srcEl),tr=rectOf(targetEl); if(!sr||!tr)return;
@@ -1198,7 +1212,7 @@ function renderGameFor(view){
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
 function tokens(n,id){let s="";const pop=(prevPoints[id]!=null&&n>prevPoints[id]);for(let i=0;i<Math.min(n,15);i++){const isNew=pop&&i>=prevPoints[id];s+=`<span class="token${isNew?' pop':''}"></span>`;}return s;}
-function cardHTML(c,opt={}){const d=DEF[c.t];const sel=opt.sel?" sel":"";const idA=opt.id?`id="${opt.id}"`:"";const clk=opt.clickable?`onclick="onCardClick(${c.id})"`:"";
+function cardHTML(c,opt={}){const d=DEF[c.t];const sel=opt.sel?" sel":"";const idA=opt.id?`id="${opt.id}"`:"";const clk=opt.clickable?`onclick="onCardClick(${c.id},event)"`:"";
   let badge="";if(isChar(c.t))badge=`<div class="badge">${c.t==="wild"?"★":setPoints(c.t)}</div>`;
   const icon=d.icon?`<span>${d.icon}</span>`:"";
   const cornerGlyph = isChar(c.t)?(ART[c.t]||d.art):d.art;
@@ -1257,16 +1271,20 @@ function renderControls(view,you){const c=$("controls");c.innerHTML="";
 }
 
 // ---- input on active client ----
-function onCardClick(cardId){ const view=lastView;if(!view)return;const you=view.players.find(p=>p.isYou);if(!you||view.activeId!==you.id||view.phase!=="playing")return;
+function rectToOrigin(el){ if(!el)return null; const r=el.getBoundingClientRect(); return {left:r.left,top:r.top,width:r.width,height:r.height,t:Date.now()}; }
+function onCardClick(cardId,ev){ const view=lastView;if(!view)return;const you=view.players.find(p=>p.isYou);if(!you||view.activeId!==you.id||view.phase!=="playing")return;
   const card=view.yourHand.find(c=>c.id===cardId);if(!card)return; initAudio();
   if(isChar(card.t)){ const i=sel.indexOf(cardId);if(i>=0)sel.splice(i,1);else if(sel.length<3)sel.push(cardId);renderGameFor(view);return; }
-  sel=[]; playActionUI(card);
+  sel=[]; const origin = ev&&ev.currentTarget?rectToOrigin(ev.currentTarget):null; playActionUI(card,origin);
 }
-function playSetUI(){ const view=lastView;const cards=sel.map(id=>view.yourHand.find(c=>c.id===id)).filter(Boolean);if(!validateSet(cards).ok)return;const ids=sel.slice();sel=[];dispatchAction({kind:"playSet",cardIds:ids}); }
-async function playActionUI(card){
+function playSetUI(){ const view=lastView;const cards=sel.map(id=>view.yourHand.find(c=>c.id===id)).filter(Boolean);if(!validateSet(cards).ok)return;
+  const els=[...document.querySelectorAll('#hand .card.sel')]; if(els.length) pendingPlayOrigin=rectToOrigin(els[Math.floor(els.length/2)]);
+  const ids=sel.slice();sel=[];dispatchAction({kind:"playSet",cardIds:ids}); }
+async function playActionUI(card,origin){
   const view=lastView; let action={kind:"playCard",cardId:card.id};
   if(card.t==="swap"){ const pair=await chooseSwapPair(view); if(!pair)return; action.swapPair=pair; }
   else if(needsTarget(card.t)){ const valid=validTargets(card.t,view); if(!valid.length){await info("No target",`No one to target with ${DEF[card.t].name}.`);return;} const tgt=await chooseTarget(card.t,valid,view); if(tgt==null)return; action.target=tgt; if(card.t==="request"){const rt=await chooseRequestType();if(!rt)return;action.requestType=rt;} }
+  if(origin) pendingPlayOrigin={...origin,t:Date.now()}; // animate this card spinning from hand to discard
   dispatchAction(action);
 }
 function validTargets(t,view){ const others=view.players.filter(p=>!p.isYou);
