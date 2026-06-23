@@ -1,0 +1,16 @@
+{
+  "name": "What's The Point? — Cactus Card Game",
+  "short_name": "What's The Point?",
+  "description": "The Cactus Card Game — play online with friends or solo vs AI. Collect cactus sets, steal points, and be the first to the goal.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#14422a",
+  "theme_color": "#2e7d32",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

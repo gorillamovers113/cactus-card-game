@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#2e7d32">
 <title>What's The Point? — The Cactus Card Game</title>
+<meta name="description" content="The Cactus Card Game — play online with friends or solo vs AI. Collect cactus sets, steal points, and race to the goal.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="What's The Point?">
+<meta property="og:title" content="What's The Point? — The Cactus Card Game">
+<meta property="og:description" content="Play the Cactus Card Game online with friends or solo vs AI. 🌵">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://gorillamovers113.github.io/cactus-card-game/icon-512.png">
+<meta property="og:url" content="https://gorillamovers113.github.io/cactus-card-game/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="What's The Point? — The Cactus Card Game">
+<meta name="twitter:description" content="Play the Cactus Card Game online with friends or solo vs AI. 🌵">
+<meta name="twitter:image" content="https://gorillamovers113.github.io/cactus-card-game/icon-512.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Luckiest+Guy&display=swap" rel="stylesheet">
@@ -20,6 +37,7 @@
     --paper:#1d3a2b; --green-vl:#1f3b2c; --ink:#dff0db; --green-d:#7bd47f;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:2px;border-radius:4px;}
   html,body{margin:0;padding:0;height:100%;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--txt);}
   body{
     background:var(--bg);
@@ -244,6 +262,13 @@
   .playedpop .card{margin:0 auto;transform:scale(1.32);box-shadow:0 18px 34px rgba(0,0,0,.55);}
   @keyframes ppin{from{opacity:0;transform:translateX(-50%) scale(.55) rotate(-6deg);}to{opacity:1;transform:translateX(-50%) scale(1);}}
   @keyframes ppout{to{opacity:0;transform:translateX(-50%) translateY(-34px) scale(.85);}}
+  /* connecting overlay */
+  #connecting{position:fixed;inset:0;z-index:80;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(12,30,20,.88);color:#fff;backdrop-filter:blur(3px);}
+  #connecting.on{display:flex;}
+  #connecting .spin{width:54px;height:54px;border-radius:50%;border:5px solid rgba(255,255,255,.18);border-top-color:var(--gold);animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #connecting .ctext{font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;text-align:center;padding:0 20px;}
+  #connecting .ccancel{width:auto;}
   /* dramatic card slam */
   #slam{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;}
   #slam.on{display:flex;}
@@ -305,7 +330,7 @@
   </div>
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition</div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.0</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -313,10 +338,10 @@
 <div id="topbar" class="hidden">
   <div class="ti"><span>🌵 What's The Point?</span> <span class="rc" id="rcChip" title="Tap to copy share link"></span></div>
   <div class="tools">
-    <button class="icbtn" id="themeBtn2" title="Theme">🌙</button>
-    <button class="icbtn" id="soundBtn" title="Sound">🔊</button>
-    <button class="icbtn" id="chatBtn" title="Chat" style="position:relative">💬<span class="unread hidden" id="unread">0</span></button>
-    <button class="icbtn red" id="leaveBtn" title="Leave">✕</button>
+    <button class="icbtn" id="themeBtn2" title="Theme" aria-label="Toggle day/night theme">🌙</button>
+    <button class="icbtn" id="soundBtn" title="Sound" aria-label="Toggle sound">🔊</button>
+    <button class="icbtn" id="chatBtn" title="Chat" aria-label="Open chat" style="position:relative">💬<span class="unread hidden" id="unread">0</span></button>
+    <button class="icbtn red" id="leaveBtn" title="Leave" aria-label="Leave game">✕</button>
   </div>
 </div>
 
@@ -343,7 +368,7 @@
     <div class="pile"><div class="pilecard draw" id="drawPile">🌵<div class="count" id="drawCount">0</div></div><div>Draw</div></div>
     <div class="pile"><div id="discardSlot" class="discardslot">discard</div><div>Discard</div></div>
     <div class="pile"><div class="pilecard point">💎<div class="count" id="pointCount">30</div></div><div>Points</div></div>
-    <div id="log"></div>
+    <div id="log" role="log" aria-live="polite" aria-label="Game activity log"></div>
   </div>
 </div>
 
@@ -365,6 +390,7 @@
   <div id="chatinput"><input id="chatText" maxlength="120" placeholder="Say something…"><button class="btn sm" id="chatSend">Send</button></div>
 </div>
 
+<div id="connecting"><div class="spin"></div><div class="ctext" id="ctext">Connecting…</div><button class="btn grey sm ccancel" onclick="goHome()">Cancel</button></div>
 <div id="slam"></div>
 <canvas id="confetti"></canvas>
 <div class="toaststack" id="toastStack"></div>
@@ -431,7 +457,7 @@ function rand(a){return a[Math.floor(Math.random()*a.length)];}
 function code4(){let s="";const ch="ABCDEFGHJKMNPQRSTUVWXYZ23456789";for(let i=0;i<4;i++)s+=ch[Math.floor(Math.random()*ch.length)];return s;}
 
 // ---------------- Sound ----------------
-let AC=null, SOUND=true;
+let AC=null, SOUND=(localStorage.getItem("cactus_sound")!=="0");
 function initAudio(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==="suspended")AC.resume(); }
 function tone(f,d,type="sine",g=0.08,when=0){ if(!SOUND||!AC)return; const o=AC.createOscillator(),v=AC.createGain();o.type=type;o.frequency.value=f;
   o.connect(v);v.connect(AC.destination);const t=AC.currentTime+when;v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+0.01);
@@ -458,7 +484,8 @@ function sfx(n){ if(SFX[n])SFX[n](); }
 function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
 
 // ---------------- Identity / persisted ----------------
-let ME={name:localStorage.getItem("cactus_name")||"",avatar:localStorage.getItem("cactus_avatar")||"🌵",role:null,id:null};
+function getClientId(){ let c=localStorage.getItem("cactus_clientId"); if(!c){ c="c"+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem("cactus_clientId",c); } return c; }
+let ME={name:localStorage.getItem("cactus_name")||"",avatar:localStorage.getItem("cactus_avatar")||"🌵",role:null,id:null,clientId:getClientId()};
 function loadStats(){try{return JSON.parse(localStorage.getItem("cactus_stats")||"{}");}catch(e){return{};}}
 function saveStats(s){localStorage.setItem("cactus_stats",JSON.stringify(s));}
 function recordResult(names,winnerName){const s=loadStats();names.forEach(n=>{s[n]=s[n]||{wins:0,games:0};s[n].games++;if(n===winnerName)s[n].wins++;});saveStats(s);}
@@ -473,18 +500,20 @@ let lastView=null;        // client/host last rendered view
 const PREFIX="wtp-cactus-v2-";
 
 function setStatus(t){document.getElementById("netStatus").textContent=t||"";}
+function showConnecting(t){ const c=document.getElementById("connecting"); if(!c)return; document.getElementById("ctext").textContent=t||"Connecting…"; c.classList.add("on"); }
+function hideConnecting(){ const c=document.getElementById("connecting"); if(c)c.classList.remove("on"); }
 
 // ----- HOST -----
 function hostCreate(){
-  ME.role="host"; ME.id="p0";
+  ME.role="host"; ME.id="p0"; _leaving=false;
   ROOM=code4();
   peer=new Peer(PREFIX+ROOM,{debug:1});
-  setStatus("Creating room…");
+  showConnecting("Creating your room…");
   peer.on("open",()=>{
-    setStatus("");
+    setStatus(""); hideConnecting();
     G=newGameState();
     G.cardArt=Object.assign({},SAVEDART); CARDART=Object.assign({},SAVEDART); applyCardStyle(G.rules.style);
-    G.players.push({id:"p0",name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
+    G.players.push({id:"p0",clientId:ME.clientId,name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
     enterLobby();
   });
   peer.on("connection",conn=>{
@@ -503,14 +532,19 @@ function hostCreate(){
 }
 function onHostData(conn,d){
   if(d.kind==="join"){
-    let p=G.players.find(x=>x.peerId===conn.peer);
-    if(!p){
+    // reconnection: match a known player/spectator by stable clientId
+    let p = d.clientId && (G.players.find(x=>x.clientId===d.clientId) || G.spectators.find(x=>x.clientId===d.clientId));
+    if(p){ // rejoin existing seat (keep hand, points, turn)
+      const wasOff=p.connected===false; p.connected=true; p.peerId=conn.peer; p.name=d.name; p.avatar=d.avatar;
+      if(wasOff) pushLog(`${d.avatar} <b>${esc(d.name)}</b> reconnected 🔌`);
+      sfx("join");
+    } else {
       if(d.asSpectator || G.over){ // explicit watch-only, or game already finished
-        p={id:"s"+(++G._sid),name:d.name,avatar:d.avatar,peerId:conn.peer,spectator:true,connected:true};
+        p={id:"s"+(++G._sid),clientId:d.clientId,name:d.name,avatar:d.avatar,peerId:conn.peer,spectator:true,connected:true};
         G.spectators.push(p);
         pushLog(`${d.avatar} <b>${esc(d.name)}</b> is now watching 👁`);
       } else {
-        p={id:"p"+(++G._pid),name:d.name,avatar:d.avatar,peerId:conn.peer,isAI:false,connected:true,hand:[],points:0};
+        p={id:"p"+(++G._pid),clientId:d.clientId,name:d.name,avatar:d.avatar,peerId:conn.peer,isAI:false,connected:true,hand:[],points:0};
         G.players.push(p);
         if(G.started){ // deal them into the game in progress
           const hand=parseInt(G.rules.hand)||5; for(let i=0;i<hand;i++)drawCard(p);
@@ -520,7 +554,7 @@ function onHostData(conn,d){
         }
       }
       sfx("join");
-    } else { p.connected=true; p.name=d.name; p.avatar=d.avatar; }
+    }
     conn.send({kind:"hello",youId:p.id,room:ROOM});
     if(Object.keys(G.cardArt).length) conn.send({kind:"cardArt",art:G.cardArt});
     broadcast();
@@ -557,19 +591,32 @@ function broadcastEphemeral(msg){ for(const pid in hostConns) hostConns[pid].sen
 function sendTo(playerId,msg){ const who=allPeople().find(x=>x.id===playerId); if(who&&who.peerId&&hostConns[who.peerId]) hostConns[who.peerId].send(msg); }
 
 // ----- CLIENT -----
+let _leaving=false, _reconnectTries=0, _wasSpectator=false;
 function clientJoin(roomCode,asSpectator){
   ME.role="client";
-  ROOM=roomCode;
+  ROOM=roomCode; _leaving=false; _reconnectTries=0; _wasSpectator=!!asSpectator;
+  showConnecting("Connecting to room "+roomCode+"…");
   peer=new Peer({debug:1});
-  setStatus("Connecting to "+roomCode+"…");
-  peer.on("open",()=>{
-    clientConn=peer.connect(PREFIX+roomCode,{reliable:true});
-    clientConn.on("open",()=>{ setStatus(""); clientConn.send({kind:"join",name:ME.name,avatar:ME.avatar,asSpectator:!!asSpectator}); });
-    clientConn.on("data",onClientData);
-    clientConn.on("close",()=>{ setStatus("Disconnected from host."); toast("Disconnected from host"); setTimeout(goHome,1500); });
-    clientConn.on("error",()=>setStatus("Connection problem."));
-  });
-  peer.on("error",e=>{ setStatus("Couldn't join: "+(e.type==="peer-unavailable"?"room not found":e.type)); });
+  peer.on("open",()=>connectToHost());
+  peer.on("error",e=>{ if(e.type==="peer-unavailable"){ if(!tryReconnect())hideConnecting(); setStatus("Couldn't find room "+roomCode+"."); }
+    else setStatus("Connection error: "+e.type); });
+  peer.on("disconnected",()=>{ try{peer.reconnect();}catch(_){}}); // keep signaling alive
+}
+function connectToHost(){
+  clientConn=peer.connect(PREFIX+ROOM,{reliable:true});
+  clientConn.on("open",()=>{ _reconnectTries=0; hideConnecting(); setStatus("");
+    clientConn.send({kind:"join",name:ME.name,avatar:ME.avatar,asSpectator:_wasSpectator,clientId:ME.clientId}); });
+  clientConn.on("data",onClientData);
+  clientConn.on("close",()=>{ if(_leaving)return; if(!tryReconnect()){ toast("Lost connection to host"); setTimeout(goHome,1800); } });
+  clientConn.on("error",()=>{});
+}
+function tryReconnect(){
+  if(_leaving||!peer||peer.destroyed) return false;
+  if(_reconnectTries>=6) return false;
+  _reconnectTries++;
+  showConnecting("Reconnecting… (try "+_reconnectTries+")");
+  setTimeout(()=>{ if(_leaving)return; if(peer.disconnected){ try{peer.reconnect();}catch(_){}} connectToHost(); }, 800*_reconnectTries);
+  return true;
 }
 function onClientData(d){
   if(d.kind==="hello"){ ME.id=d.youId; ROOM=d.room; document.getElementById("rcChip").textContent="Room "+d.room; }
@@ -1284,9 +1331,9 @@ function toast(t){const d=document.createElement("div");d.className="toast";d.te
 
 // ---- theme/sound/leave ----
 function toggleTheme(){const b=document.body;const night=b.getAttribute("data-theme")!=="night";b.setAttribute("data-theme",night?"night":"day");localStorage.setItem("cactus_theme",night?"night":"day");$("themeToggle").textContent=night?"☀️ Day mode":"🌙 Night mode";$("themeBtn2").textContent=night?"☀️":"🌙";$("soundBtn").textContent=SOUND?"🔊":"🔇";}
-function toggleSound(){SOUND=!SOUND;$("soundBtn").textContent=SOUND?"🔊":"🔇";if(SOUND){initAudio();sfx("draw");}}
-function goHome(){ try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
-  closeModal();chatOpen=false;$("chatpanel").classList.remove("on");
+function toggleSound(){SOUND=!SOUND;localStorage.setItem("cactus_sound",SOUND?"1":"0");$("soundBtn").textContent=SOUND?"🔊":"🔇";$("soundBtn").setAttribute("aria-label",SOUND?"Mute sound":"Unmute sound");if(SOUND){initAudio();sfx("draw");}}
+function goHome(){ _leaving=true; try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
+  closeModal();chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
   hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
   document.body.classList.add("home"); winShown=false; prevSnap=null; }
 
@@ -1321,7 +1368,7 @@ function boot(){
   $("createBtn").onclick=()=>{initAudio();if(!grabName())return;hostCreate();};
   $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c,$("spectateChk").checked);};
   $("soloBtn").onclick=startSolo;
-  $("themeToggle").onclick=toggleTheme; $("themeBtn2").onclick=toggleTheme; $("soundBtn").onclick=toggleSound;
+  $("themeToggle").onclick=toggleTheme; $("themeBtn2").onclick=toggleTheme; $("soundBtn").onclick=toggleSound; $("soundBtn").textContent=SOUND?"🔊":"🔇";
   $("chatBtn").onclick=toggleChat; $("chatClose").onclick=toggleChat; $("chatSend").onclick=sendChat;
   $("chatText").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
   $("leaveBtn").onclick=()=>{ if(confirm("Leave the game?"))goHome(); };
@@ -1329,6 +1376,7 @@ function boot(){
   $("artFile").addEventListener("change",onArtFile);
   document.body.addEventListener("touchstart",initAudio,{once:true});
   document.body.addEventListener("click",initAudio,{once:true});
+  if("serviceWorker" in navigator){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 }
 window.addEventListener("load",boot);
 window.onCardClick=onCardClick; // expose for inline handlers
