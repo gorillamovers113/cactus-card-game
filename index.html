@@ -158,10 +158,16 @@
     background:linear-gradient(165deg,#ffffff 0%,var(--cardpaper,#f4fbf2) 60%,#e9f3e6 100%);
     position:relative;cursor:pointer;transition:transform .14s cubic-bezier(.2,.8,.3,1.2),box-shadow .14s;overflow:hidden;
     box-shadow:0 3px 7px rgba(0,0,0,.32),inset 0 0 0 2px rgba(255,255,255,.55),inset 0 0 0 3px rgba(0,0,0,.06);
-    user-select:none;scroll-snap-align:center;animation:deal .4s ease backwards;margin:0 -6px;}
+    user-select:none;scroll-snap-align:center;margin:0 -6px;}
+  .card.rise{animation:rise .5s cubic-bezier(.2,.9,.3,1.3) backwards;}
   .card:not(:hover){filter:none;}
   .card .art img{max-height:54px;max-width:88%;object-fit:contain;border-radius:5px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));}
   @keyframes deal{from{transform:translateY(60px) rotate(-8deg) scale(.7);opacity:0;}to{opacity:1;}}
+  @keyframes rise{0%{transform:translateY(90px) scale(.6);opacity:0;}60%{transform:translateY(-10px) scale(1.04);opacity:1;}100%{transform:translateY(0) scale(1);opacity:1;}}
+  .flydeck{position:fixed;width:44px;height:62px;z-index:46;pointer-events:none;border-radius:6px;
+    background-color:var(--cardbackcolor,#2b3b2e);background-image:var(--cardback,repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px));
+    border:1px solid rgba(0,0,0,.5);box-shadow:0 4px 9px rgba(0,0,0,.4),inset 0 0 0 1.5px rgba(255,255,255,.14);}
+  .flydeck::after{content:"";position:absolute;inset:4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);}
   .card:hover{transform:translateY(-16px) scale(1.06);box-shadow:0 14px 22px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.6);z-index:5;}
   .card.sel{transform:translateY(-22px) scale(1.06);box-shadow:0 0 0 3px var(--gold),0 14px 22px rgba(0,0,0,.45);z-index:6;}
   .card .top{font-family:'Fredoka',sans-serif;font-size:9px;font-weight:600;padding:4px 6px;color:#fff;display:flex;justify-content:space-between;align-items:center;
@@ -851,7 +857,7 @@ function enterLobbyClient(view){ hide("home");show("topbar");show("lobby");hide(
   $("rcChip").textContent="Room "+view.room; $("lobbyCode").textContent=view.room;
   $("copyLinkBtn").classList.remove("hidden"); renderLobbyUI(view); }
 function enterGameScreen(){ hide("home");hide("lobby");show("topbar");show("game");
-  winShown=false; prevSnap=null;
+  winShown=false; prevSnap=null; prevHandIds=new Set();
   const n=(G&&G.players&&G.players.length)||(lastView&&lastView.players&&lastView.players.length)||3;
   playDealAnimation(n); }
 
@@ -1002,6 +1008,21 @@ function chipFlyTo(targetEl,count){
   }
   sfx("chip");
 }
+function flyFromDeck(targetEl,count){
+  if(REDUCE||!targetEl) return; const srcEl=document.querySelector(".pilecard.draw"); const sr=rectOf(srcEl),tr=rectOf(targetEl); if(!sr||!tr)return;
+  const n=Math.min(count,3);
+  for(let i=0;i<n;i++){ const card=document.createElement("div"); card.className="flydeck";
+    const sx=sr.left+sr.width/2-22, sy=sr.top+sr.height/2-31; card.style.left=sx+"px"; card.style.top=sy+"px"; document.body.appendChild(card);
+    const dx=(tr.left+tr.width/2-22)-sx, dy=(tr.top+tr.height/2-31)-sy;
+    const dur=380+i*90;
+    card.animate([{transform:"translate(0,0) scale(1) rotate(0)",opacity:.4},
+                  {transform:`translate(${dx*0.5}px,${dy*0.5-26}px) scale(.95) rotate(${(Math.random()*24-12)|0}deg)`,opacity:1,offset:.55},
+                  {transform:`translate(${dx}px,${dy}px) scale(.7) rotate(0)`,opacity:.85}],
+                 {duration:dur,easing:"cubic-bezier(.3,.7,.35,1)",fill:"forwards",delay:i*80});
+    setTimeout(()=>card.remove(),dur+i*80+40);
+  }
+  sfx("draw");
+}
 function turnBanner(text){ if(REDUCE)return; const b=document.createElement("div"); b.className="turnbanner"; b.innerHTML=`<span>${text}</span>`; document.body.appendChild(b); setTimeout(()=>b.remove(),1300); }
 function toast2(html){ const s=$("toastStack"); if(!s)return; const d=document.createElement("div"); d.className="toast2"; d.innerHTML=html; s.appendChild(d); while(s.children.length>3)s.removeChild(s.firstChild); setTimeout(()=>{ if(d.parentNode)d.remove(); },2900); }
 let confettiRAF=null;
@@ -1050,6 +1071,10 @@ function renderGameFor(view){
   const first=!prevSnap;
   if(!first){
     if(view.discardTop && view.discardTop!==prevSnap.discardTop) flyToDiscard(view.discardTop);
+    // cards drawn from the deck -> slide from the draw pile to that player
+    const drawDrop = (prevSnap.drawCount||0) - view.drawCount;
+    if(drawDrop>0){ view.players.forEach(p=>{ const grew=(p.handCount||0)-(prevSnap.handCounts[p.id]||0);
+      if(grew>0){ const tgt=p.isYou?$("youbar"):(oc.querySelector('.opp[data-id="'+p.id+'"]')); flyFromDeck(tgt,Math.min(grew,drawDrop)); } }); }
     view.players.forEach(p=>{ const was=prevSnap.points[p.id]||0; if(p.points>was){
       const tgt=p.isYou?$("youPts"):(oc.querySelector('.opp[data-id="'+p.id+'"] .pts')); chipFlyTo(tgt,p.points-was); sfx("point"); if(p.isYou)buzz(70); } });
     if(view.activeId!==prevSnap.activeId && you && view.activeId===you.id && view.phase==="playing"){ turnBanner("Your turn!"); buzz(40); }
@@ -1061,8 +1086,8 @@ function renderGameFor(view){
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
-  prevSnap={discardTop:view.discardTop, activeId:view.activeId, points:{}, lastLog:(view.log[view.log.length-1]||{}).html};
-  view.players.forEach(p=>prevSnap.points[p.id]=p.points);
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastLog:(view.log[view.log.length-1]||{}).html};
+  view.players.forEach(p=>{prevSnap.points[p.id]=p.points; prevSnap.handCounts[p.id]=p.handCount;});
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
 function tokens(n,id){let s="";const pop=(prevPoints[id]!=null&&n>prevPoints[id]);for(let i=0;i<Math.min(n,15);i++){const isNew=pop&&i>=prevPoints[id];s+=`<span class="token${isNew?' pop':''}"></span>`;}return s;}
@@ -1102,11 +1127,17 @@ function removeArt(slot){
 }
 function saveArt(){ try{localStorage.setItem("cactus_cardart",JSON.stringify(SAVEDART));}catch(e){} }
 function loadArt(){ try{SAVEDART=JSON.parse(localStorage.getItem("cactus_cardart")||"{}");}catch(e){SAVEDART={};} }
+let prevHandIds=new Set();
 function renderHand(view,you){ const h=$("hand");const myTurn=view.activeId===you.id&&view.phase==="playing";
   const sorted=[...view.yourHand].sort((a,b)=>{const ca=isChar(a.t)?0:1,cb=isChar(b.t)?0:1;return ca!==cb?ca-cb:(a.t<b.t?-1:1);});
   h.innerHTML=""; sel = sel.filter(id=>view.yourHand.some(c=>c.id===id));
-  sorted.forEach((c,i)=>{const div=document.createElement("div");div.innerHTML=cardHTML(c,{clickable:myTurn,sel:sel.includes(c.id)});const el=div.firstChild;el.style.animationDelay=(i*0.03)+"s";h.appendChild(el);});
+  const curIds=new Set(view.yourHand.map(c=>c.id));
+  let riseN=0;
+  sorted.forEach((c)=>{const div=document.createElement("div");div.innerHTML=cardHTML(c,{clickable:myTurn,sel:sel.includes(c.id)});const el=div.firstChild;
+    if(!prevHandIds.has(c.id) && prevHandIds.size>0 && !REDUCE){ el.classList.add("rise"); el.style.animationDelay=(riseN*0.07)+"s"; riseN++; }
+    h.appendChild(el);});
   if(view.yourHand.length===0)h.innerHTML='<div style="color:#789;padding:18px">— empty hand —</div>';
+  prevHandIds=curIds;
 }
 let sel=[];
 function renderControls(view,you){const c=$("controls");c.innerHTML="";
