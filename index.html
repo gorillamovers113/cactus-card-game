@@ -111,7 +111,7 @@
   .swatch.sel{border-color:var(--gold);}
   .swatch .lab{position:absolute;bottom:-16px;font-size:9px;color:var(--txt);white-space:nowrap;font-weight:bold;}
   /* ---------- GAME (premium table) ---------- */
-  #game{max-width:1040px;margin:10px auto;padding:14px 12px 158px;border-radius:22px;position:relative;
+  #game{max-width:1040px;margin:10px auto;padding:14px 12px 286px;border-radius:22px;position:relative;
     background:
       radial-gradient(ellipse 120% 80% at 50% 30%, #3a9b63 0%, #2b7d4e 42%, #1c5e39 74%, #134228 100%);
     box-shadow:inset 0 0 70px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.08), 0 18px 40px rgba(0,0,0,.35);
@@ -157,11 +157,11 @@
     width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;border:2px solid #fff;box-shadow:0 2px 5px rgba(0,0,0,.4);}
   .discardslot{width:70px;height:98px;border-radius:10px;border:2px dashed rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.6);font-size:10px;text-align:center;text-transform:uppercase;}
   .discardwrap{width:70px;height:98px;display:flex;align-items:center;justify-content:center;}
-  .discardwrap .card{transform:scale(.74);cursor:default;animation:none;box-shadow:0 4px 10px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.5);}
+  .discardwrap .card{transform:scale(.60);cursor:default;animation:none;box-shadow:0 4px 10px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.5);}
   .discardwrap .card:hover{transform:scale(.74);}
-  #log{background:rgba(8,24,16,.55);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:8px 11px;height:108px;overflow-y:auto;
-    font-size:12px;flex:1;min-width:230px;max-width:360px;color:#dff3e4;backdrop-filter:blur(4px);box-shadow:inset 0 0 18px rgba(0,0,0,.35);}
-  #log .e{margin:2px 0;padding-bottom:2px;border-bottom:1px dotted rgba(180,220,190,.18);}
+  #log{background:rgba(8,24,16,.5);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:5px 11px;max-height:52px;overflow-y:auto;
+    font-size:12px;width:100%;max-width:1000px;margin:6px auto 0;color:#dff3e4;backdrop-filter:blur(4px);box-shadow:inset 0 0 14px rgba(0,0,0,.3);text-align:center;}
+  #log .e{margin:1px 0;line-height:1.3;}
   #log .e b{color:#ffe08a;} #log .e.big{font-weight:bold;color:#ffd24d;}
   /* hand dock */
   #youbar{position:fixed;bottom:0;left:0;right:0;z-index:6;padding:8px 8px calc(10px + env(safe-area-inset-bottom));
@@ -171,33 +171,33 @@
   #youhead .me{font-family:'Fredoka',sans-serif;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
   #youhead .me .em{font-size:18px;width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);border:2px solid var(--gold);}
   #controls{display:flex;gap:8px;flex-wrap:wrap;}
-  #hand{display:flex;justify-content:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;max-width:1100px;margin:0 auto;padding:18px 10px 6px;scroll-snap-type:x proximity;min-height:150px;align-items:flex-end;}
-  .card{flex:0 0 auto;width:92px;height:130px;border-radius:11px;border:1px solid var(--cardborder,#1c281e);
+  #hand{display:flex;justify-content:center;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;max-width:1180px;margin:0 auto;padding:22px 10px 6px;scroll-snap-type:x proximity;min-height:188px;align-items:flex-end;}
+  .card{flex:0 0 auto;width:116px;height:162px;border-radius:13px;border:1px solid var(--cardborder,#1c281e);
     background:linear-gradient(165deg,#ffffff 0%,var(--cardpaper,#f4fbf2) 60%,#e9f3e6 100%);
     position:relative;cursor:pointer;transition:transform .14s cubic-bezier(.2,.8,.3,1.2),box-shadow .14s;overflow:hidden;
-    box-shadow:0 3px 7px rgba(0,0,0,.32),inset 0 0 0 2px rgba(255,255,255,.55),inset 0 0 0 3px rgba(0,0,0,.06);
-    user-select:none;scroll-snap-align:center;margin:0 -6px;}
+    box-shadow:0 3px 8px rgba(0,0,0,.32),inset 0 0 0 2px rgba(255,255,255,.55),inset 0 0 0 3px rgba(0,0,0,.06);
+    user-select:none;scroll-snap-align:center;margin:0 -7px;}
   .card.rise{animation:rise .5s cubic-bezier(.2,.9,.3,1.3) backwards;}
   .card:not(:hover){filter:none;}
-  .card .art img{max-height:54px;max-width:88%;object-fit:contain;border-radius:5px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));}
+  .card .art img{max-height:72px;max-width:88%;object-fit:contain;border-radius:6px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));}
   @keyframes deal{from{transform:translateY(60px) rotate(-8deg) scale(.7);opacity:0;}to{opacity:1;}}
   @keyframes rise{0%{transform:translateY(90px) scale(.6);opacity:0;}60%{transform:translateY(-10px) scale(1.04);opacity:1;}100%{transform:translateY(0) scale(1);opacity:1;}}
   .flydeck{position:fixed;width:44px;height:62px;z-index:46;pointer-events:none;border-radius:6px;
     background-color:var(--cardbackcolor,#2b3b2e);background-image:var(--cardback,repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px));
     border:1px solid rgba(0,0,0,.5);box-shadow:0 4px 9px rgba(0,0,0,.4),inset 0 0 0 1.5px rgba(255,255,255,.14);}
   .flydeck::after{content:"";position:absolute;inset:4px;border-radius:4px;border:1px solid rgba(255,255,255,.2);}
-  .card:hover{transform:translateY(-16px) scale(1.06);box-shadow:0 14px 22px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.6);z-index:5;}
-  .card.sel{transform:translateY(-22px) scale(1.06);box-shadow:0 0 0 3px var(--gold),0 14px 22px rgba(0,0,0,.45);z-index:6;}
-  .card .top{font-family:'Fredoka',sans-serif;font-size:9px;font-weight:600;padding:4px 6px;color:#fff;display:flex;justify-content:space-between;align-items:center;
+  .card:hover{transform:translateY(-20px) scale(1.06);box-shadow:0 16px 26px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.6);z-index:5;}
+  .card.sel{transform:translateY(-26px) scale(1.06);box-shadow:0 0 0 3px var(--gold),0 16px 26px rgba(0,0,0,.45);z-index:6;}
+  .card .top{font-family:'Fredoka',sans-serif;font-size:11px;font-weight:600;padding:5px 8px;color:#fff;display:flex;justify-content:space-between;align-items:center;
     text-shadow:0 1px 2px rgba(0,0,0,.45);box-shadow:0 1px 4px rgba(0,0,0,.25);position:relative;z-index:2;}
-  .card .art{height:58px;display:flex;align-items:center;justify-content:center;font-size:38px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));margin-top:2px;}
-  .card .nm{font-family:'Fredoka',sans-serif;font-size:11px;font-weight:600;text-align:center;padding:0 2px;line-height:1.05;color:var(--cardink,#1b3a1f);}
-  .card .desc{font-size:7.5px;text-align:center;color:var(--cardink,#456);opacity:.72;padding:1px 5px 4px;line-height:1.08;}
-  .card .corner{position:absolute;font-size:11px;line-height:1;z-index:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));}
-  .card .corner.tl{top:24px;left:4px;} .card .corner.br{bottom:4px;right:4px;transform:rotate(180deg);}
+  .card .art{height:74px;display:flex;align-items:center;justify-content:center;font-size:50px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));margin-top:3px;}
+  .card .nm{font-family:'Fredoka',sans-serif;font-size:13.5px;font-weight:600;text-align:center;padding:0 3px;line-height:1.05;color:var(--cardink,#1b3a1f);}
+  .card .desc{font-size:9.5px;text-align:center;color:var(--cardink,#456);opacity:.72;padding:2px 7px 5px;line-height:1.12;}
+  .card .corner{position:absolute;font-size:15px;line-height:1;z-index:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,.25));}
+  .card .corner.tl{top:30px;left:6px;} .card .corner.br{bottom:6px;right:6px;transform:rotate(180deg);}
   .card .gloss{position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(180deg,rgba(255,255,255,.35),transparent);pointer-events:none;z-index:1;}
-  .badge{position:absolute;top:25px;right:4px;background:radial-gradient(circle at 35% 30%,#ffe27a,#f4b400);color:#3a2a00;font-size:10px;font-weight:bold;
-    border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);z-index:3;}
+  .badge{position:absolute;top:32px;right:6px;background:radial-gradient(circle at 35% 30%,#ffe27a,#f4b400);color:#3a2a00;font-size:12px;font-weight:bold;
+    border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.4);z-index:3;}
   .you-pts{display:flex;align-items:center;padding-left:7px;}
   .you-pts .token{width:20px;height:20px;}
   /* deal/shuffle animation overlay */
@@ -315,7 +315,7 @@
   body.home .floatcactus{display:block;}
   @keyframes rise{to{transform:translateY(-115vh) rotate(360deg);}}
   @media(prefers-reduced-motion:reduce){*{animation-duration:.001s !important;}}
-  @media(max-width:560px){.card{width:74px;height:104px;}.card .art{font-size:31px;height:50px;}}
+  @media(max-width:560px){.card{width:98px;height:138px;}.card .art{font-size:42px;height:64px;}.card .nm{font-size:12px;}#hand{min-height:166px;padding-top:18px;}}
 </style>
 </head>
 <body data-theme="day">
@@ -378,7 +378,6 @@
     <div class="pile"><div class="pilecard draw" id="drawPile">🌵<div class="count" id="drawCount">0</div></div><div>Draw</div></div>
     <div class="pile"><div id="discardSlot" class="discardslot">discard</div><div>Discard</div></div>
     <div class="pile"><div class="pilecard point">💎<div class="count" id="pointCount">30</div></div><div>Points</div></div>
-    <div id="log" role="log" aria-live="polite" aria-label="Game activity log"></div>
   </div>
 </div>
 
@@ -390,6 +389,7 @@
     <div id="controls"></div>
   </div>
   <div id="hand"></div>
+  <div id="log" role="log" aria-live="polite" aria-label="Game activity log"></div>
 </div>
 
 <!-- CHAT -->
@@ -1183,7 +1183,7 @@ function renderGameFor(view){
   if(view.discardTop){ds.outerHTML=`<div id="discardSlot" class="discardwrap">${cardHTML({id:-1,t:view.discardTop})}</div>`;}
   else ds.outerHTML='<div id="discardSlot" class="discardslot">discard</div>';
   // log
-  const notable=view.log.filter(e=>e.big).slice(-6);
+  const notable=view.log.filter(e=>e.big).slice(-4);
   const lg=$("log");lg.innerHTML=(notable.length?notable:view.log.slice(-3)).map(e=>`<div class="e${e.big?' big':''}">${e.html}</div>`).join("")||'<div class="e" style="opacity:.5">No moves yet…</div>';lg.scrollTop=lg.scrollHeight;
   // you
   const you=view.players.find(p=>p.isYou);
