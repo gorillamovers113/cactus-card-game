@@ -237,6 +237,13 @@
     box-shadow:0 6px 16px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:8px;animation:t2in .3s ease, t2out .4s ease 2.4s forwards;}
   @keyframes t2in{from{opacity:0;transform:translateY(-14px) scale(.9);}to{opacity:1;transform:none;}}
   @keyframes t2out{to{opacity:0;transform:translateY(-10px) scale(.95);}}
+  .playedpop{position:fixed;left:50%;top:26%;transform:translateX(-50%);z-index:49;pointer-events:none;text-align:center;
+    animation:ppin .32s cubic-bezier(.2,1.5,.4,1), ppout .45s ease 1.55s forwards;}
+  .playedpop .who{font-family:'Fredoka',sans-serif;font-weight:600;color:#fff;text-shadow:0 2px 5px rgba(0,0,0,.7);margin-bottom:8px;font-size:15px;
+    background:rgba(15,40,27,.78);display:inline-block;padding:5px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.18);}
+  .playedpop .card{margin:0 auto;transform:scale(1.32);box-shadow:0 18px 34px rgba(0,0,0,.55);}
+  @keyframes ppin{from{opacity:0;transform:translateX(-50%) scale(.55) rotate(-6deg);}to{opacity:1;transform:translateX(-50%) scale(1);}}
+  @keyframes ppout{to{opacity:0;transform:translateX(-50%) translateY(-34px) scale(.85);}}
   .turnbanner{position:fixed;left:0;right:0;top:34%;text-align:center;z-index:48;pointer-events:none;}
   .turnbanner span{display:inline-block;font-family:'Luckiest Guy',cursive;font-size:clamp(26px,7vw,40px);color:#fff;padding:10px 30px;border-radius:46px;
     background:linear-gradient(180deg,#ffd34d,#e08e00);box-shadow:0 10px 30px rgba(0,0,0,.45);text-shadow:0 2px 0 #b85e00;animation:bannerSweep 1.25s cubic-bezier(.2,.8,.3,1) forwards;}
@@ -568,7 +575,7 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 
 // ---------------- Game state (host) ----------------
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
-  over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},
+  over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,
   rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
 function controllerIds(){ return G?[G.hostId,G.lastWinnerId].filter(Boolean):["p0"]; }
@@ -624,7 +631,7 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-30),
-    style:G.rules.style, controllers:controllerIds(),
+    style:G.rules.style, controllers:controllerIds(), lastAction:G.lastAction,
   };
 }
 function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
@@ -690,13 +697,16 @@ async function applyAction(p,action){
     const v=validateSet(cards); if(!v.ok)return false;
     for(const c of cards){p.hand.splice(p.hand.indexOf(c),1);G.discard.push(c);}
     earnPoint(p,v.pts);
+    G.lastAction={id:++G._actId, actorId:p.id, name:p.name, avatar:p.avatar, t:v.type, kind:"set", pts:v.pts};
     pushLog(`<b>${esc(p.name)}</b> played 3 ${v.type==="wild"?"Wilds":DEF[v.type].name+"s"} → +${v.pts} pt${v.pts!==1?"s":""}! (can't be stopped)`,true);
     broadcast(); if(checkWin(p))return true; return true; // set ends turn
   }
   if(action.kind==="playCard"){
     const card=p.hand.find(c=>c.id===action.cardId); if(!card||isChar(card.t))return false;
     p.hand.splice(p.hand.indexOf(card),1); G.discard.push(card); sfx("play");
-    pushLog(`<b>${esc(p.name)}</b> played ${DEF[card.t].name}${action.target!=null?` on ${esc((pById(action.target)||{}).name||"")}`:""}${action.requestType?` (wants a ${DEF[action.requestType].name})`:""}.`);
+    const tname=action.target!=null?((pById(action.target)||{}).name||""):"";
+    G.lastAction={id:++G._actId, actorId:p.id, name:p.name, avatar:p.avatar, t:card.t, kind:"card", label:DEF[card.t].name, target:tname, requestType:action.requestType||null};
+    pushLog(`<b>${esc(p.name)}</b> played ${DEF[card.t].name}${tname?` on ${esc(tname)}`:""}${action.requestType?` (wants a ${DEF[action.requestType].name})`:""}.`);
     broadcast();
     return await resolveAction(p,card.t,action);
   }
@@ -1023,6 +1033,17 @@ function flyFromDeck(targetEl,count){
   }
   sfx("draw");
 }
+function showPlayedCard(la){
+  if(!la)return;
+  if(REDUCE){ toast2(`${la.avatar} ${esc(la.name)} played ${la.kind==="set"?"a set":esc(la.label||DEF[la.t].name)}`); sfx("play"); return; }
+  document.querySelectorAll(".playedpop").forEach(e=>e.remove());
+  const sub = la.kind==="set" ? `played a set of 3 ${la.t==="wild"?"Wilds":DEF[la.t].name+"s"}!`
+            : (la.target? `played on ${esc(la.target)}` : `played`)+(la.requestType?` · wants a ${DEF[la.requestType].name}`:"");
+  const wrap=document.createElement("div"); wrap.className="playedpop";
+  wrap.innerHTML=`<div class="who">${la.avatar} <b>${esc(la.name)}</b> ${sub}</div>${cardHTML({id:-3,t:la.t})}`;
+  document.body.appendChild(wrap); sfx("play");
+  setTimeout(()=>{ if(wrap.parentNode)wrap.remove(); },2050);
+}
 function turnBanner(text){ if(REDUCE)return; const b=document.createElement("div"); b.className="turnbanner"; b.innerHTML=`<span>${text}</span>`; document.body.appendChild(b); setTimeout(()=>b.remove(),1300); }
 function toast2(html){ const s=$("toastStack"); if(!s)return; const d=document.createElement("div"); d.className="toast2"; d.innerHTML=html; s.appendChild(d); while(s.children.length>3)s.removeChild(s.firstChild); setTimeout(()=>{ if(d.parentNode)d.remove(); },2900); }
 let confettiRAF=null;
@@ -1043,12 +1064,13 @@ let prevPoints={}, prevSnap=null, winShown=false;
 function renderGameFor(view){
   lastView=view;
   $("rcChip").textContent = ROOM==="SOLO"?"Solo":("Room "+view.room);
+  const maxPts=Math.max(0,...view.players.map(p=>p.points)); const crown=p=>(p.points===maxPts&&maxPts>0)?'<span title="In the lead!">👑</span> ':'';
   // opponents = everyone who isn't you
   const oc=$("opponents");oc.innerHTML="";
   view.players.filter(p=>!p.isYou).forEach(p=>{const d=document.createElement("div");
     d.className="opp"+(p.isActive?" turn":"")+(p.connected?"":" off"); d.dataset.id=p.id;
     const tok=tokens(p.points,p.id);
-    d.innerHTML=`<div class="nm"><span class="who"><span class="em">${p.avatar}</span>${esc(p.name)} ${p.isHost?'<span class="badge-host">H</span>':''}${p.isAI?'🤖':''}</span><span style="font-size:11px;opacity:.6">${p.handCount}🃏</span></div>
+    d.innerHTML=`<div class="nm"><span class="who">${crown(p)}<span class="em">${p.avatar}</span>${esc(p.name)} ${p.isHost?'<span class="badge-host">H</span>':''}${p.isAI?'🤖':''}</span><span style="font-size:11px;opacity:.6">${p.handCount}🃏</span></div>
       <div class="mini-row">${Array(p.handCount).fill('<div class="mini"></div>').join("")}</div>
       <div class="pts">${tok}<span class="lbl">${p.points}</span></div>`;oc.appendChild(d);});
   // piles
@@ -1062,7 +1084,7 @@ function renderGameFor(view){
   const you=view.players.find(p=>p.isYou);
   if(view.spectator||!you){ show("youbar"); $("youName").innerHTML=`👁 Spectating`; $("youPts").innerHTML=""; $("controls").innerHTML=""; $("hand").innerHTML='<div style="color:#789;padding:14px">You are watching this game.</div>'; }
   else{ show("youbar");
-    $("youName").innerHTML=`<span class="em">${you.avatar}</span> ${esc(you.name)} ${you.isActive?'<span style="color:var(--gold)">— your turn!</span>':''}`;
+    $("youName").innerHTML=`${crown(you)}<span class="em">${you.avatar}</span> ${esc(you.name)} ${you.isActive?'<span style="color:var(--gold)">— your turn!</span>':''}`;
     $("youPts").innerHTML=tokens(you.points,you.id)+`<span class="lbl" style="font-size:12px;color:var(--green-d);margin-left:4px">${you.points} pt${you.points!==1?"s":""}</span>`;
     renderHand(view,you);
     renderControls(view,you);
@@ -1070,7 +1092,10 @@ function renderGameFor(view){
   // ---- juice: react to changes since last view ----
   const first=!prevSnap;
   if(!first){
-    if(view.discardTop && view.discardTop!==prevSnap.discardTop) flyToDiscard(view.discardTop);
+    if(view.discardTop && view.discardTop!==prevSnap.discardTop){
+      const la=view.lastAction; const laNew=la&&la.id!==prevSnap.lastActionId; const mine=la&&you&&la.actorId===you.id;
+      if(laNew&&!mine) showPlayedCard(la); else flyToDiscard(view.discardTop);
+    }
     // cards drawn from the deck -> slide from the draw pile to that player
     const drawDrop = (prevSnap.drawCount||0) - view.drawCount;
     if(drawDrop>0){ view.players.forEach(p=>{ const grew=(p.handCount||0)-(prevSnap.handCounts[p.id]||0);
@@ -1086,7 +1111,7 @@ function renderGameFor(view){
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
-  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastLog:(view.log[view.log.length-1]||{}).html};
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
   view.players.forEach(p=>{prevSnap.points[p.id]=p.points; prevSnap.handCounts[p.id]=p.handCount;});
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
