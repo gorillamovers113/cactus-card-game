@@ -317,6 +317,21 @@
   @keyframes slamFlash{0%{opacity:0;}25%{opacity:.6;}100%{opacity:0;}}
   @keyframes slamIn{0%{transform:scale(0) rotate(-14deg);opacity:0;}65%{transform:scale(1.22) rotate(3deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
   @keyframes slamShake{0%,100%{transform:translateX(0);}15%{transform:translateX(-14px);}30%{transform:translateX(14px);}45%{transform:translateX(-9px);}60%{transform:translateX(9px);}75%{transform:translateX(-4px);}}
+  #slam.level2 .slam-big{font-size:clamp(54px,16vw,124px);}
+  #slam.level3 .slam-big{font-size:clamp(60px,18vw,140px);-webkit-text-stroke:3px rgba(0,0,0,.6);}
+  .combo-line{font-family:'Luckiest Guy',cursive;font-size:clamp(26px,8vw,52px);color:#ff5252;text-shadow:0 3px 0 #7a0000,0 0 24px #ff5252;margin-top:6px;animation:comboPop .4s cubic-bezier(.2,1.8,.4,1) both;}
+  @keyframes comboPop{0%{transform:scale(0) rotate(-12deg);}70%{transform:scale(1.3);}100%{transform:scale(1);}}
+  /* earthquake screen shake */
+  .quake1{animation:quake 0.45s ease;} .quake2{animation:quake 0.6s ease;} .quake3{animation:quake 0.85s ease;}
+  @keyframes quake{0%,100%{transform:translate(0,0) rotate(0);}10%{transform:translate(-6px,4px) rotate(-.4deg);}20%{transform:translate(7px,-5px) rotate(.5deg);}30%{transform:translate(-9px,3px) rotate(-.5deg);}40%{transform:translate(8px,5px) rotate(.4deg);}50%{transform:translate(-7px,-4px) rotate(-.3deg);}60%{transform:translate(6px,4px) rotate(.4deg);}70%{transform:translate(-5px,-3px) rotate(-.3deg);}80%{transform:translate(4px,2px) rotate(.2deg);}90%{transform:translate(-2px,-1px) rotate(0);}}
+  .quake2{animation-name:quake2;} @keyframes quake2{0%,100%{transform:translate(0,0);}12%{transform:translate(-12px,7px) rotate(-.7deg);}25%{transform:translate(13px,-9px) rotate(.8deg);}38%{transform:translate(-15px,6px) rotate(-.8deg);}50%{transform:translate(14px,9px) rotate(.7deg);}62%{transform:translate(-12px,-7px);}75%{transform:translate(9px,6px);}88%{transform:translate(-5px,-3px);}}
+  .quake3{animation-name:quake3;} @keyframes quake3{0%,100%{transform:translate(0,0);}10%{transform:translate(-18px,10px) rotate(-1deg);}22%{transform:translate(20px,-13px) rotate(1.2deg);}34%{transform:translate(-22px,9px) rotate(-1.1deg);}46%{transform:translate(21px,13px) rotate(1deg);}58%{transform:translate(-18px,-10px) rotate(-.8deg);}70%{transform:translate(14px,9px);}82%{transform:translate(-9px,-5px);}92%{transform:translate(4px,2px);}}
+  /* stop card highlight during countdown */
+  .card.stopglow{box-shadow:0 0 0 3px var(--red),0 0 22px 4px rgba(229,57,53,.9),0 8px 16px rgba(0,0,0,.4) !important;animation:stoppulse .8s ease-in-out infinite;z-index:7;}
+  @keyframes stoppulse{0%,100%{transform:translateY(-10px) scale(1.04);}50%{transform:translateY(-18px) scale(1.09);}}
+  .cdbar{height:12px;background:rgba(0,0,0,.4);border-radius:8px;overflow:hidden;margin:0 auto 12px;max-width:320px;border:1px solid rgba(255,255,255,.2);}
+  .cdfill{height:100%;background:linear-gradient(90deg,#ef5350,#ffd34d);transition:width .1s linear;}
+  #promptZone .cd{display:inline-block;min-width:1.4em;font-family:'Luckiest Guy',cursive;font-size:1.4em;color:var(--gold);}
   .turnbanner{position:fixed;left:0;right:0;top:34%;text-align:center;z-index:48;pointer-events:none;}
   .turnbanner span{display:inline-block;font-family:'Luckiest Guy',cursive;font-size:clamp(26px,7vw,40px);color:#fff;padding:10px 30px;border-radius:46px;
     background:linear-gradient(180deg,#ffd34d,#e08e00);box-shadow:0 10px 30px rgba(0,0,0,.45);text-shadow:0 2px 0 #b85e00;animation:bannerSweep 1.25s cubic-bezier(.2,.8,.3,1) forwards;}
@@ -366,7 +381,7 @@
   </div>
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.1</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.2</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -677,8 +692,10 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 // ---------------- Game state (host) ----------------
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
   over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,bigEvent:null,_bigId:0,
+  fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,
   rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
+function scored(p){ if(G.comboBy===p.id) G.comboN++; else { G.comboBy=p.id; G.comboN=1; } return G.comboN; }
 function controllerIds(){ return G?[G.hostId,G.lastWinnerId].filter(Boolean):["p0"]; }
 function isController(id){ return controllerIds().includes(id); }
 function uidNext(){ return G._uid++; }
@@ -700,8 +717,13 @@ function doStart(isRematch){
   const n=G.players.length;
   G.goal = goalSel==="auto"?goalFor(n):parseInt(goalSel);
   for(let rr=0;rr<hand;rr++)for(const p of G.players)p.hand.push(G.draw.pop());
-  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null;
+  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.comboBy=null; G.comboN=0;
+  // Auto Grand Champ: if 2+ players are tied at the top with 3+ session wins each
+  const wc=G.players.map(p=>G.sessionWins[p.id]||0); const mx=Math.max(0,...wc);
+  const tiedTop=G.players.filter(p=>(G.sessionWins[p.id]||0)===mx).length;
+  G.grandChamp = (mx>=3 && tiedTop>=2);
   const deckNote = decks>1?` · ${decks} decks`:"";
+  if(G.grandChamp) pushLog(`🏆 <b>GRAND CHAMPIONSHIP!</b> Series tied ${mx}–${mx} — winner takes all! 🏆`,true);
   pushLog(`<b>Game start!</b> ${n} player${n!==1?"s":""}. First to ${G.goal} points wins!${deckNote} 🌵`,true);
   enterGameScreen();
   broadcast();
@@ -732,7 +754,7 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-50),
-    style:G.rules.style, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent,
+    style:G.rules.style, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp,
   };
 }
 function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
@@ -796,9 +818,10 @@ async function applyAction(p,action){
     const cards=action.cardIds.map(id=>p.hand.find(c=>c.id===id)).filter(Boolean);
     const v=validateSet(cards); if(!v.ok)return false;
     for(const c of cards){p.hand.splice(p.hand.indexOf(c),1);G.discard.push(c);}
-    earnPoint(p,v.pts);
+    earnPoint(p,v.pts); const combo=scored(p);
     G.lastAction={id:++G._actId, actorId:p.id, name:p.name, avatar:p.avatar, t:v.type, kind:"set", pts:v.pts};
-    pushLog(`<b>${esc(p.name)}</b> scored +${v.pts} with three ${v.type==="wild"?"Wilds":DEF[v.type].name+"s"}! 🌵`,true);
+    G.fanfare={id:++G._fanId, actorId:p.id, name:p.name, avatar:p.avatar, setType:v.type, pts:v.pts, combo};
+    pushLog(`<b>${esc(p.name)}</b> scored +${v.pts} with three ${v.type==="wild"?"Wilds":DEF[v.type].name+"s"}!${combo>=2?` 🔥 COMBO x${combo}!`:" 🌵"}`,true);
     broadcast(); if(checkWin(p))return true; return true; // set ends turn
   }
   if(action.kind==="playCard"){
@@ -820,12 +843,12 @@ async function resolveAction(actor,t,opt){
   switch(t){
     case "freepoint":
       if(negated){pushLog(`${esc(actor.name)}'s Free Point was blocked 🛑`,true);}
-      else{earnPoint(actor,1);pushLog(`${esc(actor.name)} earned a point ⭐`,true);}
+      else{earnPoint(actor,1);scored(actor);pushLog(`${esc(actor.name)} earned a point ⭐`,true);}
       broadcast(); if(!negated&&checkWin(actor))return true; return true;
     case "stealpoint":{
       const tgt=pById(opt.target);
       if(negated){pushLog(`${esc(actor.name)}'s point-steal was blocked 🛑`,true);broadcast();return false;}
-      if(tgt&&tgt.points>0){tgt.points--;actor.points++;sfx("steal");pushLog(`${esc(actor.name)} stole a point from ${esc(tgt.name)} 💎`,true);broadcast();if(checkWin(actor))return true;return true;}
+      if(tgt&&tgt.points>0){tgt.points--;actor.points++;scored(actor);sfx("steal");pushLog(`${esc(actor.name)} stole a point from ${esc(tgt.name)} 💎`,true);broadcast();if(checkWin(actor))return true;return true;}
       pushLog(`${esc(actor.name)} tried to steal — ${tgt?esc(tgt.name):"they"} had no points`,true);broadcast();return false; }
     case "draw3":
       if(negated){pushLog(`${esc(actor.name)}'s Draw 3 was blocked 🛑`,true);broadcast();return false;}
@@ -880,10 +903,11 @@ async function resolveStops(actor,t,targetId){
 }
 
 function checkWin(p){
-  if(p.points>=G.goal){ G.over=true;G.winner={id:p.id,name:p.name,avatar:p.avatar};
+  if(p.points>=G.goal){ G.over=true;G.winner={id:p.id,name:p.name,avatar:p.avatar,grand:G.grandChamp};
     if(!p.isAI) G.lastWinnerId=p.id; // winner becomes a controller for next game (AI can't control)
+    G.sessionWins[p.id]=(G.sessionWins[p.id]||0)+1; // session series tally
     const names=G.players.map(x=>x.name); recordResult(names,p.name);
-    pushLog(`🏆 ${esc(p.name)} reached ${p.points} points and WINS!`,true); sfx("win"); broadcast(); return true; }
+    pushLog(G.grandChamp?`🏆 ${esc(p.name)} is the GRAND CHAMPION! 🏆`:`🏆 ${esc(p.name)} reached ${p.points} points and WINS!`,true); sfx("win"); broadcast(); return true; }
   return false;
 }
 
@@ -1097,7 +1121,8 @@ function returnToLobbyCtl(){ closeModal(); if(ME.role==="host"){ G.started=false
 // ---- juice / animation helpers ----
 const SYS_REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 let ANIM = (localStorage.getItem("cactus_anim")!=="0");        // user animation preference
-let STOPMODE = localStorage.getItem("cactus_stopMode")||"ask"; // ask | auto | never
+let STOPMODE = localStorage.getItem("cactus_stopMode")||"ask"; // ask(countdown) | auto | never
+let STOPTIME = parseInt(localStorage.getItem("cactus_stopTime"))||5;  // countdown seconds
 let REDUCE = SYS_REDUCE || !ANIM;                              // effective reduced-motion
 function rectOf(el){ return el?el.getBoundingClientRect():null; }
 let pendingPlayOrigin=null;
@@ -1181,16 +1206,39 @@ function showPlayedCard(la){
 function turnBanner(text){ if(REDUCE)return; const b=document.createElement("div"); b.className="turnbanner"; b.innerHTML=`<span>${text}</span>`; document.body.appendChild(b); setTimeout(()=>b.remove(),1300); }
 function toast2(html){ const s=$("toastStack"); if(!s)return; const d=document.createElement("div"); d.className="toast2"; d.innerHTML=html; s.appendChild(d); while(s.children.length>3)s.removeChild(s.firstChild); setTimeout(()=>{ if(d.parentNode)d.remove(); },2900); }
 let confettiRAF=null;
-function confettiBurst(dur=2800){
-  const cv=$("confetti"); if(!cv)return; cv.classList.add("on"); const ctx=cv.getContext("2d");
+function confettiBurst(dur=2800,count=160){
+  const cv=$("confetti"); if(!cv||REDUCE)return; cv.classList.add("on"); const ctx=cv.getContext("2d");
   const W=cv.width=window.innerWidth, H=cv.height=window.innerHeight;
   const colors=["#f4b400","#4caf50","#e53935","#29b6f6","#8e5bd0","#ec407a","#ffffff","#ffd34d"];
-  const parts=[]; for(let i=0;i<160;i++)parts.push({x:Math.random()*W,y:-20-Math.random()*H*0.4,vx:(Math.random()-0.5)*3.5,vy:2+Math.random()*4,sz:6+Math.random()*8,rot:Math.random()*6,vr:(Math.random()-0.5)*0.35,c:rand(colors)});
+  const parts=[]; for(let i=0;i<count;i++)parts.push({x:Math.random()*W,y:-20-Math.random()*H*0.4,vx:(Math.random()-0.5)*4,vy:2+Math.random()*5,sz:6+Math.random()*9,rot:Math.random()*6,vr:(Math.random()-0.5)*0.4,c:rand(colors)});
   let start=null;
   function frame(ts){ if(start==null)start=ts; const el=ts-start; ctx.clearRect(0,0,W,H);
     parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.045; p.rot+=p.vr; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.sz/2,-p.sz/2,p.sz,p.sz*0.62); ctx.restore(); });
-    if(el<dur && !REDUCE){ confettiRAF=requestAnimationFrame(frame); } else { ctx.clearRect(0,0,W,H); cv.classList.remove("on"); } }
-  cancelAnimationFrame(confettiRAF); if(REDUCE){return;} confettiRAF=requestAnimationFrame(frame);
+    if(el<dur){ confettiRAF=requestAnimationFrame(frame); } else { ctx.clearRect(0,0,W,H); cv.classList.remove("on"); } }
+  cancelAnimationFrame(confettiRAF); confettiRAF=requestAnimationFrame(frame);
+}
+function shakeScreen(level){ if(REDUCE)return; const g=$("game")||document.body; const cls="quake"+Math.min(3,Math.max(1,level));
+  g.classList.remove("quake1","quake2","quake3"); void g.offsetWidth; g.classList.add(cls);
+  setTimeout(()=>g.classList.remove(cls), 300+Math.min(3,level)*250); }
+function setFanfare(fan){
+  const combo=fan.combo||1; const lvl=Math.min(3,combo);
+  shakeScreen(lvl); confettiBurst(1800+combo*1000, 120+combo*110); sfx("win"); buzz([40,30,80,30,120].slice(0,1+combo*2));
+  if(REDUCE){ toast2(`${fan.avatar} ${esc(fan.name)} scored a set! ${combo>=2?'COMBO x'+combo:''}`); return; }
+  const s=$("slam"); if(!s)return;
+  const label = fan.setType==="wild"?"3 WILDS!":"3 "+DEF[fan.setType].name.toUpperCase()+"S!";
+  const comboLine = combo>=2?`<div class="combo-line">🔥 COMBO ×${combo}! 🔥</div>`:"";
+  s.className="on level"+lvl;
+  s.innerHTML=`<div class="flash" style="background:radial-gradient(circle at 50% 45%, #f4b400, transparent 65%)"></div>`+
+    `<div class="slamcontent"><div class="slam-who">${fan.avatar} <b>${esc(fan.name)}</b> scores +${fan.pts}</div>`+
+    `<div class="slam-big" style="color:#ffd34d">${label}</div>${comboLine}${cardHTML({id:-7,t:fan.setType})}</div>`;
+  clearTimeout(slamTimer); slamTimer=setTimeout(()=>s.className="", 1500+combo*350);
+}
+function grandChampBanner(){
+  shakeScreen(3); confettiBurst(4200, 280); sfx("win");
+  const s=$("slam"); if(!s||REDUCE)return; s.className="on level3";
+  s.innerHTML=`<div class="flash" style="background:radial-gradient(circle at 50% 45%, #f4b400, transparent 70%)"></div>`+
+    `<div class="slamcontent"><div class="slam-big" style="color:#ffd34d;font-size:clamp(34px,10vw,80px)">🏆 GRAND<br>CHAMPIONSHIP! 🏆</div><div class="slam-who" style="margin-top:8px">Series tied — winner takes all!</div></div>`;
+  clearTimeout(slamTimer); slamTimer=setTimeout(()=>s.className="",3200);
 }
 
 // ---- game render (view-driven) ----
@@ -1231,10 +1279,12 @@ function renderGameFor(view){
     renderControls(view,you);
   }
   // ---- juice: react to changes since last view ----
+  if(!prevSnap && view.grandChamp && view.phase==="playing") setTimeout(grandChampBanner,500); // announce a grand-champ game on entry
   const first=!prevSnap;
   if(!first){
     const bigNew = view.bigEvent && view.bigEvent.id!==prevSnap.bigId;
     if(bigNew) showSlam(view.bigEvent);
+    if(view.fanfare && view.fanfare.id!==prevSnap.fanId) setFanfare(view.fanfare); // 3-of-a-kind celebration
     if(view.discardTop && view.discardTop!==prevSnap.discardTop){
       const la=view.lastAction; const laNew=la&&la.id!==prevSnap.lastActionId; const mine=la&&you&&la.actorId===you.id;
       if(bigNew){ /* slam shows the card big; skip extra card-to-discard motion */ }
@@ -1251,7 +1301,7 @@ function renderGameFor(view){
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
-  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), fanId:(view.fanfare?view.fanfare.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
   view.players.forEach(p=>{prevSnap.points[p.id]=p.points; prevSnap.handCounts[p.id]=p.handCount;});
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
@@ -1298,8 +1348,10 @@ function renderHand(view,you){ const h=$("hand");const myTurn=view.activeId===yo
   h.innerHTML=""; sel = sel.filter(id=>view.yourHand.some(c=>c.id===id));
   const curIds=new Set(view.yourHand.map(c=>c.id));
   let riseN=0;
-  sorted.forEach((c)=>{const div=document.createElement("div");div.innerHTML=cardHTML(c,{clickable:myTurn,sel:sel.includes(c.id)});const el=div.firstChild;
-    if(!prevHandIds.has(c.id) && prevHandIds.size>0 && !REDUCE){ el.classList.add("rise"); el.style.animationDelay=(riseN*0.07)+"s"; riseN++; }
+  sorted.forEach((c)=>{const stopChoice = !!stopCountdown && c.t==="stop";
+    const div=document.createElement("div");div.innerHTML=cardHTML(c,{clickable:myTurn||stopChoice,sel:sel.includes(c.id)});const el=div.firstChild;
+    if(stopChoice) el.classList.add("stopglow");
+    else if(!prevHandIds.has(c.id) && prevHandIds.size>0 && !REDUCE){ el.classList.add("rise"); el.style.animationDelay=(riseN*0.07)+"s"; riseN++; }
     h.appendChild(el);});
   if(view.yourHand.length===0)h.innerHTML='<div style="color:#789;padding:18px">— empty hand —</div>';
   prevHandIds=curIds;
@@ -1316,7 +1368,9 @@ function renderControls(view,you){const c=$("controls");c.innerHTML="";
 
 // ---- input on active client ----
 function rectToOrigin(el){ if(!el)return null; const r=el.getBoundingClientRect(); return {left:r.left,top:r.top,width:r.width,height:r.height,t:Date.now()}; }
-function onCardClick(cardId,ev){ if(promptActive)return; const view=lastView;if(!view)return;const you=view.players.find(p=>p.isYou);if(!you||view.activeId!==you.id||view.phase!=="playing")return;
+function onCardClick(cardId,ev){
+  if(stopCountdown){ const sc=(lastView&&lastView.yourHand||[]).find(x=>x.id===cardId); if(sc&&sc.t==="stop"){ initAudio(); stopCountdown.resolve(); } return; }
+  if(promptActive)return; const view=lastView;if(!view)return;const you=view.players.find(p=>p.isYou);if(!you||view.activeId!==you.id||view.phase!=="playing")return;
   const card=view.yourHand.find(c=>c.id===cardId);if(!card)return; initAudio();
   if(isChar(card.t)){ const i=sel.indexOf(cardId);if(i>=0)sel.splice(i,1);else if(sel.length<3)sel.push(cardId);renderGameFor(view);return; }
   sel=[]; const origin = ev&&ev.currentTarget?rectToOrigin(ev.currentTarget):null; playActionUI(card,origin);
@@ -1360,7 +1414,31 @@ function localPrompt(prompt){ // host's own seat
 function humanStopDecision(prompt){
   if(STOPMODE==="never") return Promise.resolve(false);
   if(STOPMODE==="auto") return Promise.resolve(clientAutoStop(prompt));
-  return humanWantStop(prompt);
+  // does this player even hold a Stop? (host knows; for safety just run the countdown)
+  return humanStopCountdown(prompt);
+}
+let stopCountdown=null;
+function humanStopCountdown(prompt){
+  return new Promise(res=>{
+    const secs=STOPTIME, total=secs*10; let remaining=total, done=false;
+    const finish=(v)=>{ if(done)return; done=true; clearInterval(iv); stopCountdown=null; hidePrompt();
+      if(lastView){const you=lastView.players.find(p=>p.isYou); if(you)renderHand(lastView,you);} res(v); };
+    stopCountdown={resolve:()=>finish(true)};
+    const counter = prompt.stops%2===1
+      ? `Counter the Stop on <b>${esc(prompt.actorName)}</b>'s ${DEF[prompt.actionType].name}?`
+      : `<b>${esc(prompt.actorName)}</b> played ${DEF[prompt.actionType].art} ${DEF[prompt.actionType].name}!`;
+    showPrompt(`<div class="pq">🛑 ${counter}<br>Tap your <b>STOP</b> card to block — <span class="cd">${secs}</span>s</div>`+
+      `<div class="cdbar"><div class="cdfill" style="width:100%"></div></div>`+
+      `<div class="pbtns"><button class="pbtn no" onclick="__pass()">Let it happen</button></div>`);
+    window.__pass=()=>finish(false);
+    if(lastView){const you=lastView.players.find(p=>p.isYou); if(you)renderHand(lastView,you);} // highlight + enable the stop card
+    sfx("stop");
+    const iv=setInterval(()=>{ remaining--; if(remaining<=0){ finish(false); return; }
+      const cd=document.querySelector("#promptZone .cd"); if(cd)cd.textContent=Math.ceil(remaining/10);
+      const fill=document.querySelector("#promptZone .cdfill"); if(fill)fill.style.width=(remaining/total*100)+"%";
+      if(remaining<=20 && remaining%5===0) sfx("click");
+    },100);
+  });
 }
 function clientAutoStop(prompt){
   const v=lastView; if(!v)return false; const me=v.players.find(p=>p.isYou); if(!me)return false;
@@ -1400,10 +1478,12 @@ function showWinner(view){ const w=view.winner; const me=view.players.find(p=>p.
   const stats=loadStats(); const board=Object.entries(stats).sort((a,b)=>b[1].wins-a[1].wins).slice(0,6).map(([n,s])=>`<div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>${s.wins}W / ${s.games}G</b></div>`).join("");
   const amCtl=(view.controllers||["p0"]).includes(ME.id);
   const ctlNote = amCtl?"You won — you now control the settings for the next game!":"";
-  confettiBurst(iWon?3600:2600); sfx("win"); buzz(iWon?[60,40,120]:60);
-  modal(`<div class="trophy-cup">${iWon?"🏆":w.avatar}</div>
-    <div class="winbanner" style="margin-top:4px">${iWon?"You win!":esc(w.name)+" wins!"}</div>
-    <p style="text-align:center">Reached the goal of ${view.goal} points.${ctlNote?'<br><span style="color:var(--green-d);font-weight:bold">'+ctlNote+'</span>':''}</p>
+  const grand = w.grand;
+  if(grand){ confettiBurst(5000,300); shakeScreen(3); } else confettiBurst(iWon?3600:2600);
+  sfx("win"); buzz(iWon?[60,40,120]:60);
+  modal(`<div class="trophy-cup"${grand?' style="font-size:90px"':''}>${iWon?"🏆":w.avatar}</div>
+    <div class="winbanner" style="margin-top:4px${grand?';color:#ffd34d':''}">${grand?(iWon?"🏆 GRAND CHAMPION! 🏆":esc(w.name)+" is GRAND CHAMPION!"):(iWon?"You win!":esc(w.name)+" wins!")}</div>
+    <p style="text-align:center">${grand?"Won the series tiebreaker!":"Reached the goal of "+view.goal+" points."}${ctlNote?'<br><span style="color:var(--green-d);font-weight:bold">'+ctlNote+'</span>':''}</p>
     <div class="panel" style="text-align:left"><div style="font-weight:bold;margin-bottom:4px">🏅 Win tracker</div>${board||"<i>No stats yet</i>"}</div>
     <div class="opts">${amCtl?'<button onclick="returnToLobbyCtl()">⚙️ Set up next game</button>':'<button style="background:#eee" onclick="closeModal()">Close</button>'}<button style="background:#eee" onclick="goHome()">Leave to home</button></div>`);}
 
@@ -1423,6 +1503,7 @@ function toast(t){const d=document.createElement("div");d.className="toast";d.te
 function toggleTheme(){const b=document.body;const night=b.getAttribute("data-theme")!=="night";b.setAttribute("data-theme",night?"night":"day");localStorage.setItem("cactus_theme",night?"night":"day");const tt=$("themeToggle");if(tt)tt.textContent=night?"☀️ Day mode":"🌙 Night mode";}
 function toggleSound(){SOUND=!SOUND;localStorage.setItem("cactus_sound",SOUND?"1":"0");if(SOUND){initAudio();sfx("draw");}}
 function setStopMode(m){ STOPMODE=m; localStorage.setItem("cactus_stopMode",m); }
+function setStopTime(s){ STOPTIME=parseInt(s)||5; localStorage.setItem("cactus_stopTime",STOPTIME); }
 function setAnim(on){ ANIM=!!on; localStorage.setItem("cactus_anim",on?"1":"0"); REDUCE=SYS_REDUCE||!ANIM; }
 // ---- Settings menu ----
 function showSettings(){
@@ -1432,13 +1513,15 @@ function showSettings(){
     <div class="setrow"><span>🔊 Sound</span>${seg([{v:'on',l:'On'},{v:'off',l:'Off'}],SOUND?'on':'off','__snd')}</div>
     <div class="setrow"><span>✨ Animations</span>${seg([{v:'on',l:'Full'},{v:'off',l:'Reduced'}],ANIM?'on':'off','__anim')}</div>
     <div class="setrow"><span>🌗 Theme</span>${seg([{v:'day',l:'Day'},{v:'night',l:'Night'}],night?'night':'day','__thm')}</div>
-    <div class="setrow col"><span>🛑 My Stop cards</span>${seg([{v:'ask',l:'Ask me'},{v:'auto',l:'Auto'},{v:'never',l:'Never'}],STOPMODE,'__stop')}
-      <div class="setnote">Ask = prompt each time · Auto = play a Stop automatically when it helps · Never = keep them in hand</div></div>
+    <div class="setrow col"><span>🛑 My Stop cards</span>${seg([{v:'ask',l:'Countdown'},{v:'auto',l:'Auto'},{v:'never',l:'Never'}],STOPMODE,'__stop')}
+      <div class="setnote">Countdown = your Stop card lights up, tap it to block before time runs out · Auto = block automatically when it helps · Never = keep them in hand</div></div>
+    ${STOPMODE==='ask'?`<div class="setrow"><span>⏱️ Stop timer</span>${seg([{v:'5',l:'5s'},{v:'10',l:'10s'}],String(STOPTIME),'__stoptime')}</div>`:''}
     <div class="opts"><button onclick="showRules()">📖 How to play</button><button style="background:#eee" onclick="closeModal()">Done</button></div>`);
   window.__snd=v=>{ if((v==='on')!==SOUND)toggleSound(); refreshSeg(); };
   window.__anim=v=>{ setAnim(v==='on'); refreshSeg(); };
   window.__thm=v=>{ const isNight=document.body.getAttribute("data-theme")==="night"; if((v==='night')!==isNight)toggleTheme(); refreshSeg(); };
   window.__stop=v=>{ setStopMode(v); refreshSeg(); };
+  window.__stoptime=v=>{ setStopTime(v); refreshSeg(); };
   function refreshSeg(){ showSettings(); }
 }
 // ---- Notifications history ----
@@ -1448,7 +1531,7 @@ function showHistory(){
   modal(`<h2>📜 Notifications</h2><div class="histbox">${items}</div><div class="opts"><button style="background:#eee" onclick="closeModal()">Close</button></div>`);
 }
 function goHome(){ _leaving=true; try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
-  closeModal();hidePrompt();chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
+  closeModal();hidePrompt();stopCountdown=null;chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
   hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
   document.body.classList.add("home"); winShown=false; prevSnap=null; }
 
