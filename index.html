@@ -71,6 +71,19 @@
   .rules-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;}
   .rules-grid label{font-size:13px;font-weight:bold;display:flex;flex-direction:column;gap:4px;}
   .rules-grid select,.rules-grid input{padding:8px;border-radius:10px;border:2px solid var(--panelbd);font-family:inherit;font-size:14px;background:var(--paper);color:var(--txt);}
+  .rules-grid select:disabled{opacity:.55;cursor:not-allowed;}
+  .lock-note{font-size:12px;background:var(--green-vl);border:2px dashed var(--green-l);border-radius:10px;padding:8px 10px;margin:6px 0;text-align:center;}
+  .art-section{margin:8px 0;}
+  .art-slots{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .art-slot{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:bold;}
+  .art-slot .thumb{width:54px;height:74px;border-radius:8px;border:2px solid var(--panelbd);background:var(--cardpaper,#f4fbf2);
+    display:flex;align-items:center;justify-content:center;font-size:26px;overflow:hidden;cursor:pointer;position:relative;}
+  .art-slot .thumb img{max-width:100%;max-height:100%;object-fit:contain;}
+  .art-slot .thumb .x{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;display:flex;align-items:center;justify-content:center;border:1px solid #fff;}
+  .style-swatches{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+  .swatch{width:48px;height:64px;border-radius:8px;border:3px solid transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:22px;position:relative;}
+  .swatch.sel{border-color:var(--gold);}
+  .swatch .lab{position:absolute;bottom:-16px;font-size:9px;color:var(--txt);white-space:nowrap;font-weight:bold;}
   /* ---------- GAME ---------- */
   #game{max-width:1000px;margin:0 auto;padding:6px 10px 150px;}
   #opponents{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:8px 0;}
@@ -81,8 +94,8 @@
   .opp .nm .who{display:flex;align-items:center;gap:5px;overflow:hidden;}
   .opp .em{font-size:18px;}
   .opp .mini-row{display:flex;gap:2px;margin-top:5px;min-height:26px;flex-wrap:wrap;}
-  .mini{width:15px;height:22px;border-radius:3px;background:var(--back);
-    background-image:repeating-linear-gradient(45deg,#37503b 0 4px,#2b3b2e 4px 8px);border:1px solid #1c281e;}
+  .mini{width:15px;height:22px;border-radius:3px;background:var(--cardbackcolor,#2b3b2e);
+    background-image:var(--cardback,repeating-linear-gradient(45deg,#37503b 0 4px,#2b3b2e 4px 8px));border:1px solid var(--cardborder,#1c281e);}
   .pts{display:flex;gap:2px;margin-top:5px;align-items:center;flex-wrap:wrap;min-height:18px;}
   .token{width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7bd47f,var(--green-d));
     border:2px solid #fff;box-shadow:0 1px 2px rgba(0,0,0,.3);}
@@ -93,7 +106,7 @@
   #center{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:flex-start;margin:8px 0;}
   .pile{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:bold;color:var(--green-d);}
   .pilecard{width:62px;height:88px;border-radius:9px;border:2px solid #1c281e;display:flex;align-items:center;justify-content:center;position:relative;}
-  .pilecard.draw{background:var(--back);background-image:repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px);color:#9cc79f;font-size:26px;}
+  .pilecard.draw{background:var(--cardbackcolor,#2b3b2e);background-image:var(--cardback,repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px));color:#9cc79f;font-size:26px;}
   .pilecard.point{background:#37474f;background-image:repeating-linear-gradient(45deg,#455a64 0 7px,#37474f 7px 14px);font-size:26px;}
   .pilecard .count{position:absolute;bottom:-8px;right:-8px;background:var(--gold);color:#3a2a00;border-radius:50%;
     width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:12px;border:2px solid #fff;}
@@ -108,16 +121,17 @@
   #youhead .me{font-weight:bold;color:var(--green-d);display:flex;align-items:center;gap:6px;}
   #controls{display:flex;gap:6px;flex-wrap:wrap;}
   #hand{display:flex;gap:6px;justify-content:center;flex-wrap:nowrap;overflow-x:auto;max-width:1100px;margin:0 auto;padding:4px 2px;scroll-snap-type:x proximity;}
-  .card{flex:0 0 auto;width:80px;height:112px;border-radius:10px;border:2px solid #1c281e;background:var(--paper);
+  .card{flex:0 0 auto;width:80px;height:112px;border-radius:10px;border:2px solid var(--cardborder,#1c281e);background:var(--cardpaper,#f4fbf2);
     position:relative;cursor:pointer;transition:transform .12s,box-shadow .12s;overflow:hidden;box-shadow:0 2px 4px rgba(0,0,0,.18);
     user-select:none;scroll-snap-align:center;animation:deal .35s ease backwards;}
+  .card .art img{max-height:50px;max-width:92%;object-fit:contain;border-radius:4px;}
   @keyframes deal{from{transform:translateY(40px) scale(.8);opacity:0;}to{transform:none;opacity:1;}}
   .card:hover{transform:translateY(-6px);box-shadow:0 8px 14px rgba(0,0,0,.22);}
   .card.sel{transform:translateY(-12px);box-shadow:0 0 0 3px var(--gold),0 8px 14px rgba(0,0,0,.25);}
   .card .top{font-size:9px;font-weight:bold;padding:3px 5px;color:#fff;display:flex;justify-content:space-between;align-items:center;}
   .card .art{height:54px;display:flex;align-items:center;justify-content:center;font-size:34px;}
-  .card .nm{font-size:10px;font-weight:bold;text-align:center;padding:0 2px;line-height:1.05;color:#1b3a1f;}
-  .card .desc{font-size:7.5px;text-align:center;color:#456;padding:1px 3px 3px;line-height:1.05;}
+  .card .nm{font-size:10px;font-weight:bold;text-align:center;padding:0 2px;line-height:1.05;color:var(--cardink,#1b3a1f);}
+  .card .desc{font-size:7.5px;text-align:center;color:var(--cardink,#456);opacity:.75;padding:1px 3px 3px;line-height:1.05;}
   .badge{position:absolute;top:22px;right:3px;background:var(--gold);color:#3a2a00;font-size:9px;font-weight:bold;
     border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;border:1px solid #fff;}
   .you-pts{display:flex;gap:2px;align-items:center;flex-wrap:wrap;}
@@ -202,25 +216,8 @@
     <button class="btn sm alt" id="copyLinkBtn">📋 Copy share link</button>
   </div>
   <div class="lobby-players" id="lobbyPlayers"></div>
-  <div id="hostControls" class="panel hidden">
-    <div style="font-weight:bold;margin-bottom:6px">House rules</div>
-    <div class="rules-grid">
-      <label>Point goal
-        <select id="ruleGoal"><option value="auto">Auto (by players)</option><option>3</option><option>5</option><option>6</option><option>8</option><option>10</option><option>15</option></select>
-      </label>
-      <label>Starting hand
-        <select id="ruleHand"><option>4</option><option selected>5</option><option>6</option><option>7</option></select>
-      </label>
-      <label>Add AI players
-        <select id="ruleAI"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
-      </label>
-      <label>Wild set bonus
-        <select id="ruleWild"><option value="3" selected>3 pts (official)</option><option value="2">2 pts</option><option value="4">4 pts</option></select>
-      </label>
-    </div>
-    <button class="btn" id="startBtn">🌵 Start game</button>
-  </div>
-  <div id="waitMsg" class="panel hidden" style="text-align:center">Waiting for the host to start…</div>
+  <div id="settingsPanel" class="panel"></div>
+  <input type="file" id="artFile" accept="image/*" class="hidden">
 </div>
 
 <!-- GAME -->
@@ -287,6 +284,27 @@ const setPoints=type=>type==="walter"?3:type==="spike"?2:type==="wild"?WILDBONUS
 const AVATARS=["🌵","🌷","🌶️","🍐","🦂","🌞","🐍","🪨","🌴","🦎","🏜️","🤠"];
 const AI_NAMES=["Prickly Pete","Sandy","Cacti Carla","Thorny Tom","Desert Dan","Spike Jr."];
 
+// ---------------- Card styles (shared, controller-set) ----------------
+const STYLES={
+  classic:{name:"Classic", paper:"#f4fbf2", ink:"#1b3a1f", border:"#1c281e", backColor:"#2b3b2e",
+    back:"repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px)", art:{charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}, sw:"🌵"},
+  desert:{name:"Desert", paper:"#fff7e6", ink:"#5b3d12", border:"#8d6e3a", backColor:"#c08a2d",
+    back:"repeating-linear-gradient(45deg,#e0b15a 0 7px,#c08a2d 7px 14px)", art:{charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}, sw:"🏜️"},
+  night:{name:"Neon Night", paper:"#16273a", ink:"#dbeafe", border:"#0a141f", backColor:"#142d44",
+    back:"repeating-linear-gradient(45deg,#27496d 0 7px,#142d44 7px 14px)", art:{charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}, sw:"🌙"},
+  bold:{name:"Bold Pop", paper:"#fffde7", ink:"#1a1a1a", border:"#000000", backColor:"#b71c1c",
+    back:"repeating-linear-gradient(45deg,#ef5350 0 7px,#b71c1c 7px 14px)", art:{charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}, sw:"💥"},
+  critters:{name:"Critters", paper:"#f4fbf2", ink:"#1b3a1f", border:"#1c281e", backColor:"#2b3b2e",
+    back:"repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px)", art:{charlie:"🐢",spike:"🦂",walter:"🦎",wild:"🌈"}, sw:"🦂"},
+};
+let ART={charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}; // current style's emoji art
+let CURSTYLE="classic";
+let CARDART={};   // custom uploaded art per character: {charlie:dataURL,...} (shared in-game)
+let SAVEDART={};  // this device's saved custom art (persists)
+function applyCardStyle(id){ const s=STYLES[id]||STYLES.classic; const r=document.documentElement.style;
+  r.setProperty('--cardpaper',s.paper); r.setProperty('--cardink',s.ink); r.setProperty('--cardborder',s.border);
+  r.setProperty('--cardback',s.back); r.setProperty('--cardbackcolor',s.backColor); ART=s.art; CURSTYLE=id; }
+
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function rand(a){return a[Math.floor(Math.random()*a.length)];}
 function code4(){let s="";const ch="ABCDEFGHJKMNPQRSTUVWXYZ23456789";for(let i=0;i<4;i++)s+=ch[Math.floor(Math.random()*ch.length)];return s;}
@@ -335,6 +353,7 @@ function hostCreate(){
   peer.on("open",()=>{
     setStatus("");
     G=newGameState();
+    G.cardArt=Object.assign({},SAVEDART); CARDART=Object.assign({},SAVEDART); applyCardStyle(G.rules.style);
     G.players.push({id:"p0",name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
     enterLobby();
   });
@@ -367,13 +386,18 @@ function onHostData(conn,d){
       sfx("join");
     } else { p.connected=true; p.name=d.name; p.avatar=d.avatar; }
     conn.send({kind:"hello",youId:p.id,room:ROOM});
+    if(Object.keys(G.cardArt).length) conn.send({kind:"cardArt",art:G.cardArt});
     broadcast();
   }
   else if(d.kind==="response"){ const r=G._prompts[d.reqId]; if(r){delete G._prompts[d.reqId]; r(d.value);} }
   else if(d.kind==="action"){ const p=G.players.find(x=>x.peerId===conn.peer); if(p) submitActionFrom(p.id,d.action); }
   else if(d.kind==="chat"){ const who=allPeople().find(x=>x.peerId===conn.peer); addChat(who?who.name:"?",who?who.avatar:"❓",d.text); }
   else if(d.kind==="react"){ const who=allPeople().find(x=>x.peerId===conn.peer); fireReaction(who?who.name:"?",d.emoji); broadcastEphemeral({kind:"react",from:who?who.name:"?",emoji:d.emoji}); }
-  else if(d.kind==="rematch"){ if(G.over) doStart(true); }
+  else if(d.kind==="rematch"){ const p=G.players.find(x=>x.peerId===conn.peer); if(G.over&&p&&isController(p.id)) doStart(true); }
+  else if(d.kind==="setRules"){ const p=G.players.find(x=>x.peerId===conn.peer); if(p&&isController(p.id)&&!G.started){ Object.assign(G.rules,d.rules||{}); applyCardStyle(G.rules.style); broadcast(); } }
+  else if(d.kind==="requestStart"){ const p=G.players.find(x=>x.peerId===conn.peer); if(p&&isController(p.id)&&!G.started) doStart(false); }
+  else if(d.kind==="requestLobby"){ const p=G.players.find(x=>x.peerId===conn.peer); if(p&&isController(p.id)&&G.over){ G.started=false; enterLobby(); broadcast(); } }
+  else if(d.kind==="setCardArt"){ const p=G.players.find(x=>x.peerId===conn.peer); if(p&&isController(p.id)){ if(d.dataURL)G.cardArt[d.slot]=d.dataURL; else delete G.cardArt[d.slot]; CARDART=Object.assign({},G.cardArt); broadcastEphemeral({kind:"cardArt",art:G.cardArt}); if(!G.started)broadcast(); else broadcast(); } }
 }
 function onPeerClose(peerId){
   const p=G&&G.players.find(x=>x.peerId===peerId);
@@ -413,11 +437,12 @@ function clientJoin(roomCode){
 }
 function onClientData(d){
   if(d.kind==="hello"){ ME.id=d.youId; ROOM=d.room; document.getElementById("rcChip").textContent="Room "+d.room; }
-  else if(d.kind==="lobby"){ lastView=d.view; enterLobbyClient(d.view); }
-  else if(d.kind==="view"){ lastView=d.view; if(document.getElementById("lobby").classList.contains("hidden")===false||document.getElementById("home").classList.contains("hidden")===false){enterGameScreen();} renderGameFor(d.view); }
+  else if(d.kind==="lobby"){ lastView=d.view; if(d.view.style)applyCardStyle(d.view.style); enterLobbyClient(d.view); }
+  else if(d.kind==="view"){ lastView=d.view; if(d.view.style)applyCardStyle(d.view.style); if(document.getElementById("lobby").classList.contains("hidden")===false||document.getElementById("home").classList.contains("hidden")===false){enterGameScreen();} renderGameFor(d.view); }
   else if(d.kind==="prompt"){ handlePrompt(d.reqId,d.prompt); }
   else if(d.kind==="chat"){ addChatLocal(d.from,d.avatar,d.text); }
   else if(d.kind==="react"){ fireReaction(d.from,d.emoji); }
+  else if(d.kind==="cardArt"){ CARDART=Object.assign({},d.art||{}); if(lastView)renderGameFor(lastView); }
 }
 function clientSend(msg){ if(clientConn&&clientConn.open) clientConn.send(msg); }
 
@@ -428,30 +453,33 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 
 // ---------------- Game state (host) ----------------
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
-  over:false,winner:null,started:false,log:[],chat:[],_pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[],rules:{}}; }
+  over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},
+  rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic"},
+  _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
+function controllerIds(){ return G?[G.hostId,G.lastWinnerId].filter(Boolean):["p0"]; }
+function isController(id){ return controllerIds().includes(id); }
 function uidNext(){ return G._uid++; }
 function goalFor(n){ if(n<=3)return 10; if(n<=5)return 6; return 5; }
-function buildDeck(){ const d=[]; for(const t in COMPOSITION)for(let i=0;i<COMPOSITION[t];i++)d.push({id:uidNext(),t}); return shuffle(d); }
+function buildDeck(decks){ decks=decks||1; const d=[]; for(let k=0;k<decks;k++)for(const t in COMPOSITION)for(let i=0;i<COMPOSITION[t];i++)d.push({id:uidNext(),t}); return shuffle(d); }
 
 function doStart(isRematch){
-  // read rules
-  const goalSel=document.getElementById("ruleGoal").value;
-  const hand=parseInt(document.getElementById("ruleHand").value)||5;
-  const aiCount=parseInt(document.getElementById("ruleAI").value)||0;
-  WILDBONUS=parseInt(document.getElementById("ruleWild").value)||3;
-  G.rules={goalSel,hand,aiCount,wild:WILDBONUS};
+  // read rules from G.rules (set by controller via UI / network)
+  const r=G.rules; const goalSel=r.goalSel||"auto"; const hand=parseInt(r.hand)||5;
+  const aiCount=parseInt(r.aiCount)||0; WILDBONUS=parseInt(r.wild)||3; const decks=parseInt(r.decks)||1;
+  applyCardStyle(r.style||"classic");
   // remove old AI, re-add fresh
   G.players=G.players.filter(p=>!p.isAI);
   const aiNames=shuffle(AI_NAMES.slice());
   for(let i=0;i<aiCount;i++) G.players.push({id:"ai"+i,name:aiNames[i%aiNames.length],avatar:rand(["🤖","🌵","🦂","🐍","🌶️"]),isAI:true,connected:true,hand:[],points:0});
   // reset
   for(const p of G.players){p.hand=[];p.points=0;}
-  G.draw=buildDeck(); G.discard=[]; G.pointPile=POINT_CARDS_TOTAL;
+  G.draw=buildDeck(decks); G.discard=[]; G.pointPile=POINT_CARDS_TOTAL*decks;
   const n=G.players.length;
   G.goal = goalSel==="auto"?goalFor(n):parseInt(goalSel);
-  for(let r=0;r<hand;r++)for(const p of G.players)p.hand.push(G.draw.pop());
+  for(let rr=0;rr<hand;rr++)for(const p of G.players)p.hand.push(G.draw.pop());
   G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[];
-  pushLog(`<b>Game start!</b> ${n} player${n!==1?"s":""}. First to ${G.goal} points wins! 🌵`,true);
+  const deckNote = decks>1?` · ${decks} decks`:"";
+  pushLog(`<b>Game start!</b> ${n} player${n!==1?"s":""}. First to ${G.goal} points wins!${deckNote} 🌵`,true);
   enterGameScreen();
   broadcast();
   beginTurn();
@@ -481,10 +509,11 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-30),
+    style:G.rules.style, controllers:controllerIds(),
   };
 }
-function lobbyView(){ return {room:ROOM,
-  players:G.players.map(p=>({id:p.id,name:p.name,avatar:p.avatar,isHost:p.id==="p0",isAI:!!p.isAI,connected:p.connected!==false})),
+function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
+  players:G.players.map(p=>({id:p.id,name:p.name,avatar:p.avatar,isHost:p.id===G.hostId,isWinner:p.id===G.lastWinnerId,isAI:!!p.isAI,connected:p.connected!==false})),
   spectators:G.spectators.map(s=>({name:s.name,avatar:s.avatar})) }; }
 
 // ---------------- decisions (host) ----------------
@@ -620,6 +649,7 @@ async function resolveStops(actor,t,targetId){
 
 function checkWin(p){
   if(p.points>=G.goal){ G.over=true;G.winner={id:p.id,name:p.name,avatar:p.avatar};
+    if(!p.isAI) G.lastWinnerId=p.id; // winner becomes a controller for next game (AI can't control)
     const names=G.players.map(x=>x.name); recordResult(names,p.name);
     pushLog(`🏆 ${esc(p.name)} reached ${p.points} points and WINS!`,true); sfx("win"); broadcast(); return true; }
   return false;
@@ -687,7 +717,9 @@ function show(id){$(id).classList.remove("hidden");} function hide(id){$(id).cla
 function renderAvatars(){const w=$("avPick");w.innerHTML="";AVATARS.forEach(a=>{const d=document.createElement("div");d.className="av"+(a===ME.avatar?" sel":"");d.textContent=a;d.onclick=()=>{ME.avatar=a;localStorage.setItem("cactus_avatar",a);renderAvatars();};w.appendChild(d);});}
 
 function startSolo(){ if(!grabName())return; initAudio(); ME.role="host";ME.id="p0";ROOM="SOLO";
-  peer=null; G=newGameState(); G.players.push({id:"p0",name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
+  peer=null; G=newGameState();
+  G.cardArt=Object.assign({},SAVEDART); CARDART=Object.assign({},SAVEDART); applyCardStyle(G.rules.style);
+  G.players.push({id:"p0",name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
   enterLobby(); // host lobby; they can add AI and start
 }
 function grabName(){ const n=$("nameInput").value.trim()||("Player"); ME.name=n.slice(0,14); localStorage.setItem("cactus_name",ME.name); return true; }
@@ -697,26 +729,88 @@ function enterLobby(){ // HOST view of lobby
   hide("home");show("topbar");show("lobby");hide("game");hide("youbar");
   $("rcChip").textContent = ROOM==="SOLO"?"Solo":("Room "+ROOM);
   $("lobbyCode").textContent = ROOM==="SOLO"?"SOLO":ROOM;
-  show("hostControls");hide("waitMsg");
   if(ROOM==="SOLO") $("copyLinkBtn").classList.add("hidden"); else $("copyLinkBtn").classList.remove("hidden");
   renderLobby();
 }
 function enterLobbyClient(view){ hide("home");show("topbar");show("lobby");hide("game");hide("youbar");
   $("rcChip").textContent="Room "+view.room; $("lobbyCode").textContent=view.room;
-  hide("hostControls");show("waitMsg"); renderLobbyClient(view); }
+  $("copyLinkBtn").classList.remove("hidden"); renderLobbyUI(view); }
 function enterGameScreen(){ hide("home");hide("lobby");show("topbar");show("game"); }
 
-function renderLobby(){ // host
-  const v=lobbyView(); $("lobbyCode").textContent=ROOM==="SOLO"?"SOLO":v.room;
+function renderLobby(){ const v=lobbyView(); $("lobbyCode").textContent=ROOM==="SOLO"?"SOLO":v.room; renderLobbyUI(v); }
+
+function renderLobbyUI(view){
+  // player list
   const w=$("lobbyPlayers");w.innerHTML="";
-  v.players.forEach(p=>{const d=document.createElement("div");d.className="pl-row";
-    d.innerHTML=`<span class="em">${p.avatar}</span><span class="nm">${esc(p.name)}</span><span class="role">${p.isHost?'<span class="badge-host">HOST</span>':p.isAI?'🤖 AI':'player'}</span>`;w.appendChild(d);});
-  v.spectators&&v.spectators.forEach(s=>{const d=document.createElement("div");d.className="pl-row";d.style.opacity=.7;d.innerHTML=`<span class="em">${s.avatar}</span><span class="nm">${esc(s.name)}</span><span class="role">👁 spectator</span>`;w.appendChild(d);});
-}
-function renderLobbyClient(view){ const w=$("lobbyPlayers");w.innerHTML="";
   view.players.forEach(p=>{const d=document.createElement("div");d.className="pl-row";
-    d.innerHTML=`<span class="em">${p.avatar}</span><span class="nm">${esc(p.name)}</span><span class="role">${p.isHost?'<span class="badge-host">HOST</span>':p.isAI?'🤖 AI':'player'}</span>`;w.appendChild(d);});
-  (view.spectators||[]).forEach(s=>{const d=document.createElement("div");d.className="pl-row";d.style.opacity=.7;d.innerHTML=`<span class="em">${s.avatar}</span><span class="nm">${esc(s.name)}</span><span class="role">👁</span>`;w.appendChild(d);}); }
+    const role=p.isHost?'<span class="badge-host">HOST</span>':p.isAI?'🤖 AI':(p.isWinner?'<span class="badge-host">WINNER</span>':'player');
+    d.innerHTML=`<span class="em">${p.avatar}</span><span class="nm">${esc(p.name)}</span><span class="role">${role}</span>`;w.appendChild(d);});
+  (view.spectators||[]).forEach(s=>{const d=document.createElement("div");d.className="pl-row";d.style.opacity=.7;d.innerHTML=`<span class="em">${s.avatar}</span><span class="nm">${esc(s.name)}</span><span class="role">👁 spectator</span>`;w.appendChild(d);});
+  // settings panel
+  const amCtl=(view.controllers||["p0"]).includes(ME.id);
+  buildSettingsPanel(view.rules||{}, amCtl, view);
+}
+
+function buildSettingsPanel(rules, amCtl, view){
+  const panel=$("settingsPanel"); panel.innerHTML="";
+  const dis = amCtl?"":"disabled";
+  const opt=(v,sel)=>`<option value="${v}" ${String(sel)===String(v)?"selected":""}>${v}</option>`;
+  const ctlNames=(view.players||[]).filter(p=>(view.controllers||[]).includes(p.id)).map(p=>p.name).join(" or ")||"the host";
+  panel.innerHTML=`
+    <div style="font-weight:bold;margin-bottom:4px">⚙️ Settings ${amCtl?'<span style="font-size:11px;color:var(--green-d)">— you control these</span>':''}</div>
+    ${amCtl?"":`<div class="lock-note">🔒 Only <b>${esc(ctlNames)}</b> can change settings (the host or last game's winner).</div>`}
+    <div class="rules-grid">
+      <label>Point goal<select id="ruleGoal" ${dis}>
+        ${["auto","3","5","6","8","10","15"].map(v=>`<option value="${v}" ${String(rules.goalSel||"auto")===v?"selected":""}>${v==="auto"?"Auto (by players)":v}</option>`).join("")}</select></label>
+      <label>Starting hand<select id="ruleHand" ${dis}>${[4,5,6,7].map(v=>opt(v,rules.hand||5)).join("")}</select></label>
+      <label>Add AI players<select id="ruleAI" ${dis}>${[0,1,2,3,4,5].map(v=>opt(v,rules.aiCount||0)).join("")}</select></label>
+      <label>Number of decks<select id="ruleDecks" ${dis}>${[1,2,3,4].map(v=>opt(v,rules.decks||1)).join("")}</select></label>
+      <label>Wild set bonus<select id="ruleWild" ${dis}>
+        <option value="3" ${String(rules.wild||3)==="3"?"selected":""}>3 pts (official)</option>
+        <option value="2" ${String(rules.wild)==="2"?"selected":""}>2 pts</option>
+        <option value="4" ${String(rules.wild)==="4"?"selected":""}>4 pts</option></select></label>
+    </div>
+    <div class="art-section">
+      <div style="font-weight:bold;font-size:13px">🎴 Card style</div>
+      <div class="style-swatches" id="styleSwatches"></div>
+    </div>
+    <div class="art-section" style="margin-top:22px">
+      <div style="font-weight:bold;font-size:13px">🖼️ Custom character art ${amCtl?'<span style="font-size:11px;opacity:.7">— tap a card to upload (saves to your device)</span>':''}</div>
+      <div class="art-slots" id="artSlots"></div>
+    </div>
+    ${amCtl?`<button class="btn" id="startBtn" style="margin-top:8px">🌵 Start game</button>`:`<div class="lock-note" style="margin-top:8px">Waiting for <b>${esc(ctlNames)}</b> to start…</div>`}
+  `;
+  // style swatches
+  const sw=$("styleSwatches");
+  Object.keys(STYLES).forEach(id=>{const s=STYLES[id];const el=document.createElement("div");
+    el.className="swatch"+((rules.style||"classic")===id?" sel":"");
+    el.style.background=s.backColor; el.style.backgroundImage=s.back; el.title=s.name;
+    el.innerHTML=`<span style="filter:drop-shadow(0 1px 1px #000)">${s.sw}</span><span class="lab">${s.name}</span>`;
+    if(amCtl) el.onclick=()=>{ updateRules({style:id}); };
+    sw.appendChild(el);});
+  // art slots
+  const slots=$("artSlots");
+  ["charlie","spike","walter","wild"].forEach(t=>{
+    const el=document.createElement("div");el.className="art-slot";
+    const has=CARDART[t];
+    el.innerHTML=`<div class="thumb" data-slot="${t}">${has?`<img src="${has}">`:(ART[t]||DEF[t].art)}${has&&amCtl?'<span class="x" data-x="'+t+'">✕</span>':''}</div><span>${DEF[t].name}</span>`;
+    if(amCtl){ const thumb=el.querySelector(".thumb"); thumb.onclick=(e)=>{ if(e.target.dataset.x){ removeArt(e.target.dataset.x); return; } pendingArtSlot=t; $("artFile").click(); }; }
+    slots.appendChild(el);});
+  // wire rule selects
+  if(amCtl){
+    ["ruleGoal","ruleHand","ruleAI","ruleDecks","ruleWild"].forEach(id=>{ const el=$(id); if(el) el.onchange=()=>gatherAndSendRules(); });
+    const sb=$("startBtn"); if(sb) sb.onclick=()=>{ initAudio(); startGameCtl(); };
+  }
+}
+function gatherAndSendRules(){ updateRules({
+  goalSel:$("ruleGoal").value, hand:parseInt($("ruleHand").value), aiCount:parseInt($("ruleAI").value),
+  decks:parseInt($("ruleDecks").value), wild:parseInt($("ruleWild").value) }); }
+function updateRules(partial){
+  if(ME.role==="host"){ Object.assign(G.rules,partial); applyCardStyle(G.rules.style); broadcast(); }
+  else { const merged=Object.assign({},(lastView&&lastView.rules)||{},partial); if(partial.style)applyCardStyle(partial.style); clientSend({kind:"setRules",rules:merged}); }
+}
+function startGameCtl(){ if(ME.role==="host") doStart(false); else clientSend({kind:"requestStart"}); }
+function returnToLobbyCtl(){ closeModal(); if(ME.role==="host"){ G.started=false; enterLobby(); broadcast(); } else clientSend({kind:"requestLobby"}); }
 
 // ---- game render (view-driven) ----
 let prevPoints={};
@@ -755,7 +849,29 @@ function tokens(n,id){let s="";const pop=(prevPoints[id]!=null&&n>prevPoints[id]
 function cardHTML(c,opt={}){const d=DEF[c.t];const sel=opt.sel?" sel":"";const idA=opt.id?`id="${opt.id}"`:"";const clk=opt.clickable?`onclick="onCardClick(${c.id})"`:"";
   let badge="";if(isChar(c.t))badge=`<div class="badge">${c.t==="wild"?"★":setPoints(c.t)}</div>`;
   const icon=d.icon?`<span>${d.icon}</span>`:"";
-  return `<div class="card${sel}" ${idA} ${clk}><div class="top" style="background:${d.color}"><span>${d.name}</span>${icon}</div><div class="art">${d.art}</div><div class="nm">${d.name}</div><div class="desc">${d.desc}</div>${badge}</div>`;}
+  let art=d.art; if(isChar(c.t)){ art = CARDART[c.t]?`<img src="${CARDART[c.t]}">`:(ART[c.t]||d.art); }
+  return `<div class="card${sel}" ${idA} ${clk}><div class="top" style="background:${d.color}"><span>${d.name}</span>${icon}</div><div class="art">${art}</div><div class="nm">${d.name}</div><div class="desc">${d.desc}</div>${badge}</div>`;}
+
+// ---- custom art upload ----
+let pendingArtSlot=null;
+function resizeImage(file,max,cb){ const img=new Image(); const fr=new FileReader();
+  fr.onload=()=>{ img.onload=()=>{ let{width:w,height:h}=img; const scale=Math.min(1,max/Math.max(w,h)); w=Math.round(w*scale);h=Math.round(h*scale);
+    const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);
+    cb(cv.toDataURL("image/png")); }; img.src=fr.result; }; fr.readAsDataURL(file); }
+function onArtFile(e){ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f||!pendingArtSlot)return; const slot=pendingArtSlot;pendingArtSlot=null;
+  resizeImage(f,220,(dataURL)=>{ setArt(slot,dataURL); }); }
+function setArt(slot,dataURL){
+  SAVEDART[slot]=dataURL; saveArt(); // persist on this device
+  if(ME.role==="host"){ G.cardArt[slot]=dataURL; CARDART=Object.assign({},G.cardArt); broadcastEphemeral({kind:"cardArt",art:G.cardArt}); broadcast(); }
+  else { CARDART[slot]=dataURL; clientSend({kind:"setCardArt",slot,dataURL}); if(lastView)renderLobbyUI(lastView); }
+}
+function removeArt(slot){
+  delete SAVEDART[slot]; saveArt();
+  if(ME.role==="host"){ delete G.cardArt[slot]; CARDART=Object.assign({},G.cardArt); broadcastEphemeral({kind:"cardArt",art:G.cardArt}); broadcast(); }
+  else { delete CARDART[slot]; clientSend({kind:"setCardArt",slot,dataURL:null}); if(lastView)renderLobbyUI(lastView); }
+}
+function saveArt(){ try{localStorage.setItem("cactus_cardart",JSON.stringify(SAVEDART));}catch(e){} }
+function loadArt(){ try{SAVEDART=JSON.parse(localStorage.getItem("cactus_cardart")||"{}");}catch(e){SAVEDART={};} }
 function renderHand(view,you){ const h=$("hand");const myTurn=view.activeId===you.id&&view.phase==="playing";
   const sorted=[...view.yourHand].sort((a,b)=>{const ca=isChar(a.t)?0:1,cb=isChar(b.t)?0:1;return ca!==cb?ca-cb:(a.t<b.t?-1:1);});
   h.innerHTML=""; sel = sel.filter(id=>view.yourHand.some(c=>c.id===id));
@@ -764,7 +880,7 @@ function renderHand(view,you){ const h=$("hand");const myTurn=view.activeId===yo
 }
 let sel=[];
 function renderControls(view,you){const c=$("controls");c.innerHTML="";
-  if(view.phase==="over"){ if(ME.role==="host")c.innerHTML='<button class="btn sm" onclick="hostRematch()">🔁 Rematch</button>'; else c.innerHTML='<span style="font-size:12px;opacity:.7">Game over</span>'; return; }
+  if(view.phase==="over"){ const amCtl=(view.controllers||["p0"]).includes(ME.id); if(amCtl)c.innerHTML='<button class="btn sm" onclick="returnToLobbyCtl()">⚙️ Next game</button>'; else c.innerHTML='<span style="font-size:12px;opacity:.7">Game over</span>'; return; }
   if(view.activeId!==you.id){ c.innerHTML='<span style="font-size:13px;opacity:.7">Waiting for '+esc((view.players.find(p=>p.id===view.activeId)||{}).name||"…")+'</span>'; return; }
   const setBtn=document.createElement("button");setBtn.className="btn sm alt";
   const cards=sel.map(id=>view.yourHand.find(c=>c.id===id)).filter(Boolean);const v=validateSet(cards);
@@ -819,11 +935,12 @@ function humanWantStop(prompt){return new Promise(res=>{const ctx=prompt.stops%2
 
 function showWinner(view){ view._shown=true; const w=view.winner; const me=view.players.find(p=>p.isYou);
   const stats=loadStats(); const board=Object.entries(stats).sort((a,b)=>b[1].wins-a[1].wins).slice(0,6).map(([n,s])=>`<div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>${s.wins}W / ${s.games}G</b></div>`).join("");
+  const amCtl=(view.controllers||["p0"]).includes(ME.id);
+  const ctlNote = amCtl?"You won — you now control the settings for the next game!":"";
   modal(`<div class="winbanner">${me&&w.id===me.id?"🏆 You win! 🏆":w.avatar+" "+esc(w.name)+" wins!"}</div>
-    <p style="text-align:center">Reached the goal of ${view.goal} points.</p>
+    <p style="text-align:center">Reached the goal of ${view.goal} points.${ctlNote?'<br><span style="color:var(--green-d);font-weight:bold">'+ctlNote+'</span>':''}</p>
     <div class="panel" style="text-align:left"><div style="font-weight:bold;margin-bottom:4px">🏅 Win tracker</div>${board||"<i>No stats yet</i>"}</div>
-    <div class="opts">${ME.role==="host"?'<button onclick="hostRematch()">🔁 Rematch (same group)</button>':'<button style="background:#eee" onclick="closeModal()">Close</button>'}<button style="background:#eee" onclick="goHome()">Leave to home</button></div>`);}
-function hostRematch(){ closeModal(); if(ME.role==="host"){ G.started=false; enterLobby(); broadcast(); } }
+    <div class="opts">${amCtl?'<button onclick="returnToLobbyCtl()">⚙️ Set up next game</button>':'<button style="background:#eee" onclick="closeModal()">Close</button>'}<button style="background:#eee" onclick="goHome()">Leave to home</button></div>`);}
 
 // ---- chat & reactions ----
 let unread=0,chatOpen=false;
@@ -863,6 +980,7 @@ function showRules(){ modal(`<h2>How to play 🌵</h2>
 // ---------------- boot / wiring ----------------
 function boot(){
   if(localStorage.getItem("cactus_theme")==="night"){document.body.setAttribute("data-theme","night");$("themeToggle").textContent="☀️ Day mode";}
+  loadArt(); applyCardStyle("classic");
   $("nameInput").value=ME.name; renderAvatars(); buildReactBar();
   // hash auto-join
   const h=(location.hash||"").replace("#","").trim().toUpperCase();
@@ -875,7 +993,7 @@ function boot(){
   $("chatText").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
   $("leaveBtn").onclick=()=>{ if(confirm("Leave the game?"))goHome(); };
   $("rcChip").onclick=copyShare; $("copyLinkBtn").onclick=copyShare;
-  $("startBtn").onclick=()=>{ initAudio(); if(G.players.length<1){return;} doStart(false); };
+  $("artFile").addEventListener("change",onArtFile);
   document.body.addEventListener("touchstart",initAudio,{once:true});
   document.body.addEventListener("click",initAudio,{once:true});
 }
