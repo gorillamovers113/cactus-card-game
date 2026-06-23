@@ -274,6 +274,9 @@
     <div class="or">— or —</div>
     <input id="codeInput" class="field" maxlength="5" placeholder="Room code" style="text-transform:uppercase;letter-spacing:4px;text-align:center;">
     <button class="btn alt" id="joinBtn">Join game</button>
+    <label style="display:flex;align-items:center;gap:7px;justify-content:center;font-size:13px;margin-top:4px;cursor:pointer;opacity:.85;">
+      <input type="checkbox" id="spectateChk" style="width:18px;height:18px;"> 👁 Just watch (spectate only)
+    </label>
   </div>
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
@@ -475,14 +478,20 @@ function onHostData(conn,d){
   if(d.kind==="join"){
     let p=G.players.find(x=>x.peerId===conn.peer);
     if(!p){
-      if(G.started){ // becomes spectator
+      if(d.asSpectator || G.over){ // explicit watch-only, or game already finished
         p={id:"s"+(++G._sid),name:d.name,avatar:d.avatar,peerId:conn.peer,spectator:true,connected:true};
         G.spectators.push(p);
+        pushLog(`${d.avatar} <b>${esc(d.name)}</b> is now watching 👁`);
       } else {
         p={id:"p"+(++G._pid),name:d.name,avatar:d.avatar,peerId:conn.peer,isAI:false,connected:true,hand:[],points:0};
         G.players.push(p);
+        if(G.started){ // deal them into the game in progress
+          const hand=parseInt(G.rules.hand)||5; for(let i=0;i<hand;i++)drawCard(p);
+          pushLog(`${d.avatar} <b>${esc(d.name)}</b> joined the game! 🌵`,true);
+        } else {
+          pushLog(`${d.avatar} <b>${esc(d.name)}</b> joined the lobby.`);
+        }
       }
-      pushLog(`${d.avatar} <b>${esc(d.name)}</b> joined${p.spectator?" as spectator":""}.`);
       sfx("join");
     } else { p.connected=true; p.name=d.name; p.avatar=d.avatar; }
     conn.send({kind:"hello",youId:p.id,room:ROOM});
@@ -521,14 +530,14 @@ function broadcastEphemeral(msg){ for(const pid in hostConns) hostConns[pid].sen
 function sendTo(playerId,msg){ const who=allPeople().find(x=>x.id===playerId); if(who&&who.peerId&&hostConns[who.peerId]) hostConns[who.peerId].send(msg); }
 
 // ----- CLIENT -----
-function clientJoin(roomCode){
+function clientJoin(roomCode,asSpectator){
   ME.role="client";
   ROOM=roomCode;
   peer=new Peer({debug:1});
   setStatus("Connecting to "+roomCode+"…");
   peer.on("open",()=>{
     clientConn=peer.connect(PREFIX+roomCode,{reliable:true});
-    clientConn.on("open",()=>{ setStatus(""); clientConn.send({kind:"join",name:ME.name,avatar:ME.avatar}); });
+    clientConn.on("open",()=>{ setStatus(""); clientConn.send({kind:"join",name:ME.name,avatar:ME.avatar,asSpectator:!!asSpectator}); });
     clientConn.on("data",onClientData);
     clientConn.on("close",()=>{ setStatus("Disconnected from host."); toast("Disconnected from host"); setTimeout(goHome,1500); });
     clientConn.on("error",()=>setStatus("Connection problem."));
@@ -1219,7 +1228,7 @@ function boot(){
   const h=(location.hash||"").replace("#","").trim().toUpperCase();
   if(h&&h.length>=3&&h.length<=5){$("codeInput").value=h;}
   $("createBtn").onclick=()=>{initAudio();if(!grabName())return;hostCreate();};
-  $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c);};
+  $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c,$("spectateChk").checked);};
   $("soloBtn").onclick=startSolo;
   $("themeToggle").onclick=toggleTheme; $("themeBtn2").onclick=toggleTheme; $("soundBtn").onclick=toggleSound;
   $("chatBtn").onclick=toggleChat; $("chatClose").onclick=toggleChat; $("chatSend").onclick=sendChat;
