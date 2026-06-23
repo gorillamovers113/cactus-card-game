@@ -111,7 +111,7 @@
   .swatch.sel{border-color:var(--gold);}
   .swatch .lab{position:absolute;bottom:-16px;font-size:9px;color:var(--txt);white-space:nowrap;font-weight:bold;}
   /* ---------- GAME (premium table) ---------- */
-  #game{max-width:1040px;margin:10px auto;padding:14px 12px 286px;border-radius:22px;position:relative;
+  #game{max-width:1040px;margin:10px auto;padding:14px 12px 214px;border-radius:22px;position:relative;
     background:
       radial-gradient(ellipse 120% 80% at 50% 30%, #3a9b63 0%, #2b7d4e 42%, #1c5e39 74%, #134228 100%);
     box-shadow:inset 0 0 70px rgba(0,0,0,.45), inset 0 2px 0 rgba(255,255,255,.08), 0 18px 40px rgba(0,0,0,.35);
@@ -167,10 +167,28 @@
   .discardwrap{width:96px;height:134px;display:flex;align-items:center;justify-content:center;}
   .discardwrap .card{transform:scale(.82);cursor:default;animation:none;box-shadow:0 4px 10px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.5);}
   .discardwrap .card:hover{transform:scale(.82);}
-  #log{background:rgba(8,24,16,.5);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:5px 11px;max-height:52px;overflow-y:auto;
-    font-size:12px;width:100%;max-width:1000px;margin:6px auto 0;color:#dff3e4;backdrop-filter:blur(4px);box-shadow:inset 0 0 14px rgba(0,0,0,.3);text-align:center;}
+  #centerZone{max-width:680px;margin:14px auto 0;}
+  #log{background:rgba(8,24,16,.5);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 12px;max-height:62px;overflow-y:auto;
+    font-size:13px;width:100%;margin:0 auto;color:#dff3e4;backdrop-filter:blur(4px);box-shadow:inset 0 0 14px rgba(0,0,0,.3);text-align:center;transition:opacity .2s;}
+  #log.dim{opacity:.25;}
   #log .e{margin:1px 0;line-height:1.3;}
   #log .e b{color:#ffe08a;} #log .e.big{font-weight:bold;color:#ffd24d;}
+  /* inline prompt zone (under the piles) */
+  #promptZone{background:linear-gradient(180deg,rgba(20,55,36,.96),rgba(13,40,27,.96));border:2px solid var(--gold);border-radius:16px;
+    padding:14px 16px;margin:0 auto 8px;box-shadow:0 8px 26px rgba(0,0,0,.45);text-align:center;animation:pzin .25s ease;}
+  @keyframes pzin{from{opacity:0;transform:translateY(-8px) scale(.97);}to{opacity:1;transform:none;}}
+  #promptZone .pq{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(16px,4.5vw,22px);color:#fff;margin-bottom:12px;line-height:1.25;}
+  #promptZone .pq b{color:var(--gold);}
+  .pbtns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .pbtn{font-family:'Luckiest Guy',cursive;font-size:clamp(20px,6vw,30px);letter-spacing:1px;border:none;border-radius:14px;
+    padding:12px 30px;cursor:pointer;color:#fff;background:linear-gradient(180deg,#5cc763,#3da047);box-shadow:0 5px 0 #2c7d38,0 8px 14px rgba(0,0,0,.3);transition:.1s;}
+  .pbtn:active{transform:translateY(4px);box-shadow:0 1px 0 #2c7d38;}
+  .pbtn.yes{background:linear-gradient(180deg,#5cc763,#2e9c43);box-shadow:0 5px 0 #1f6e2c,0 8px 14px rgba(0,0,0,.3);}
+  .pbtn.no{background:linear-gradient(180deg,#ef5350,#d32f2f);box-shadow:0 5px 0 #9a1f1f,0 8px 14px rgba(0,0,0,.3);}
+  .pbtn.choice{font-family:'Fredoka',sans-serif;font-size:16px;padding:11px 18px;background:linear-gradient(180deg,#3da047,#2c7d38);box-shadow:0 4px 0 #1f5e2a,0 6px 12px rgba(0,0,0,.3);}
+  .pbtn.grey{background:linear-gradient(180deg,#90a4ae,#6b7d87);box-shadow:0 4px 0 #4d5b63,0 6px 12px rgba(0,0,0,.3);}
+  .pbtns.cards{gap:8px;}
+  .pbtns .pickback{width:58px;height:82px;}
   /* hand dock */
   #youbar{position:fixed;bottom:0;left:0;right:0;z-index:6;padding:8px 8px calc(10px + env(safe-area-inset-bottom));
     background:linear-gradient(180deg, rgba(20,50,34,.0), rgba(15,40,27,.92) 28%);
@@ -388,6 +406,10 @@
     <div class="pile"><div id="discardSlot" class="discardslot">discard</div><div>Discard</div></div>
     <div class="pile"><div class="pilecard point">💎<div class="count" id="pointCount">30</div></div><div>Points</div></div>
   </div>
+  <div id="centerZone">
+    <div id="promptZone" class="hidden"></div>
+    <div id="log" role="log" aria-live="polite" aria-label="Game activity log"></div>
+  </div>
 </div>
 
 <!-- YOU BAR -->
@@ -398,7 +420,6 @@
     <div id="controls"></div>
   </div>
   <div id="hand"></div>
-  <div id="log" role="log" aria-live="polite" aria-label="Game activity log"></div>
 </div>
 
 <!-- CHAT -->
@@ -1290,17 +1311,17 @@ function renderControls(view,you){const c=$("controls");c.innerHTML="";
   const setBtn=document.createElement("button");setBtn.className="btn sm alt";
   const cards=sel.map(id=>view.yourHand.find(c=>c.id===id)).filter(Boolean);const v=validateSet(cards);
   setBtn.textContent=v.ok?`Play Set (+${v.pts})`:"Play Set";setBtn.disabled=!v.ok;setBtn.onclick=playSetUI;c.appendChild(setBtn);
-  const dB=document.createElement("button");dB.className="btn sm";dB.textContent="Draw & end turn";dB.onclick=()=>dispatchAction({kind:"drawEnd"});c.appendChild(dB);
+  const dB=document.createElement("button");dB.className="btn sm";dB.textContent="Draw & end turn";dB.onclick=()=>{if(promptActive)return;dispatchAction({kind:"drawEnd"});};c.appendChild(dB);
 }
 
 // ---- input on active client ----
 function rectToOrigin(el){ if(!el)return null; const r=el.getBoundingClientRect(); return {left:r.left,top:r.top,width:r.width,height:r.height,t:Date.now()}; }
-function onCardClick(cardId,ev){ const view=lastView;if(!view)return;const you=view.players.find(p=>p.isYou);if(!you||view.activeId!==you.id||view.phase!=="playing")return;
+function onCardClick(cardId,ev){ if(promptActive)return; const view=lastView;if(!view)return;const you=view.players.find(p=>p.isYou);if(!you||view.activeId!==you.id||view.phase!=="playing")return;
   const card=view.yourHand.find(c=>c.id===cardId);if(!card)return; initAudio();
   if(isChar(card.t)){ const i=sel.indexOf(cardId);if(i>=0)sel.splice(i,1);else if(sel.length<3)sel.push(cardId);renderGameFor(view);return; }
   sel=[]; const origin = ev&&ev.currentTarget?rectToOrigin(ev.currentTarget):null; playActionUI(card,origin);
 }
-function playSetUI(){ const view=lastView;const cards=sel.map(id=>view.yourHand.find(c=>c.id===id)).filter(Boolean);if(!validateSet(cards).ok)return;
+function playSetUI(){ if(promptActive)return; const view=lastView;const cards=sel.map(id=>view.yourHand.find(c=>c.id===id)).filter(Boolean);if(!validateSet(cards).ok)return;
   const els=[...document.querySelectorAll('#hand .card.sel')]; if(els.length) pendingPlayOrigin=rectToOrigin(els[Math.floor(els.length/2)]);
   const ids=sel.slice();sel=[];dispatchAction({kind:"playSet",cardIds:ids}); }
 async function playActionUI(card,origin){
@@ -1356,21 +1377,24 @@ const overlay=$("overlay"),modalEl=$("modal");
 function modal(html){modalEl.innerHTML=html;overlay.classList.add("on");}
 function closeModal(){overlay.classList.remove("on");}
 function info(title,msg){return new Promise(res=>{modal(`<h2>${title}</h2><p>${msg}</p><div class="opts"><button onclick="__r()">OK</button></div>`);window.__r=()=>{closeModal();res();};});}
-function chooseTarget(t,validIds,view){return new Promise(res=>{const btns=validIds.map(id=>{const p=view.players.find(x=>x.id===id);return `<button onclick="__pick('${id}')">${p.avatar} ${esc(p.name)} <span style="float:right;opacity:.6">${p.points}pt · ${p.handCount}🃏</span></button>`;}).join("");
-  modal(`<h2>${DEF[t].art} ${DEF[t].name}</h2><p>Choose a player:</p><div class="opts">${btns}<button style="background:#eee" onclick="__pick(null)">Cancel</button></div>`);window.__pick=id=>{closeModal();res(id);};});}
-function chooseSwapPair(view){return new Promise(res=>{const ps=view.players;const opts=[];for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)opts.push(`<button onclick="__pair('${ps[i].id}','${ps[j].id}')">${ps[i].avatar} ${esc(ps[i].name)} ↔ ${ps[j].avatar} ${esc(ps[j].name)}</button>`);
-  modal(`<h2>🔄 Swap Hands</h2><p>Pick two players to swap (can include you):</p><div class="opts">${opts.join("")}<button style="background:#eee" onclick="__pair()">Cancel</button></div>`);window.__pair=(a,b)=>{closeModal();res(a?[a,b]:null);};});}
+// ---- inline prompts (rendered under the draw/discard/points piles) ----
+let promptActive=false;
+function showPrompt(html){ const pz=$("promptZone"); if(!pz)return; pz.innerHTML=html; pz.classList.remove("hidden"); const lg=$("log"); if(lg)lg.classList.add("dim"); promptActive=true; pz.scrollIntoView&&pz.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+function hidePrompt(){ const pz=$("promptZone"); if(pz){pz.classList.add("hidden");pz.innerHTML="";} const lg=$("log"); if(lg)lg.classList.remove("dim"); promptActive=false; }
+function chooseTarget(t,validIds,view){return new Promise(res=>{const btns=validIds.map(id=>{const p=view.players.find(x=>x.id===id);return `<button class="pbtn choice" onclick="__pick('${id}')">${p.avatar} ${esc(p.name)} · ${p.points}pt</button>`;}).join("");
+  showPrompt(`<div class="pq">${DEF[t].art} ${DEF[t].name} — choose a player</div><div class="pbtns">${btns}<button class="pbtn choice grey" onclick="__pick(null)">Cancel</button></div>`);window.__pick=id=>{hidePrompt();res(id);};});}
+function chooseSwapPair(view){return new Promise(res=>{const ps=view.players;const opts=[];for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)opts.push(`<button class="pbtn choice" onclick="__pair('${ps[i].id}','${ps[j].id}')">${ps[i].avatar} ${esc(ps[i].name)} ↔ ${ps[j].avatar} ${esc(ps[j].name)}</button>`);
+  showPrompt(`<div class="pq">🔄 Swap whose hands?</div><div class="pbtns">${opts.join("")}<button class="pbtn choice grey" onclick="__pair()">Cancel</button></div>`);window.__pair=(a,b)=>{hidePrompt();res(a?[a,b]:null);};});}
 function chooseRequestType(){return new Promise(res=>{const types=["charlie","spike","walter","wild","stop","freepoint","stealpoint","draw3","seesteal","stealcard","request","swap"];
-  const btns=types.map(t=>`<button onclick="__rt('${t}')">${DEF[t].art} ${DEF[t].name}</button>`).join("");modal(`<h2>🙏 Request a Card</h2><p>Ask for which card?</p><div class="opts">${btns}<button style="background:#eee" onclick="__rt('')">Cancel</button></div>`);window.__rt=t=>{closeModal();res(t||null);};});}
+  const btns=types.map(t=>`<button class="pbtn choice" onclick="__rt('${t}')">${DEF[t].art} ${DEF[t].name}</button>`).join("");showPrompt(`<div class="pq">🙏 Ask for which card?</div><div class="pbtns">${btns}<button class="pbtn choice grey" onclick="__rt('')">Cancel</button></div>`);window.__rt=t=>{hidePrompt();res(t||null);};});}
 function pickFromHand(prompt){return new Promise(res=>{
   const blind=prompt.blind;
   const cards=prompt.cards.map(c=> blind?`<div class="pickback" onclick="__take(${c.id})">🌵</div>`:`<div onclick="__take(${c.id})" style="cursor:pointer">${cardHTML(c)}</div>`).join("");
-  const title=blind?"🤏 Steal a Card":"👀 See and Steal";
-  const sub=blind?`${esc(prompt.targetName)} fans out their hand face-down — tap one to steal it:`:`${esc(prompt.targetName)}'s hand — tap a card to take it:`;
-  const cancel=blind?"":`<div class="opts" style="margin-top:10px"><button style="background:#eee" onclick="__take(0)">Take nothing</button></div>`;
-  modal(`<h2>${title}</h2><p>${sub}</p><div class="mini-cards">${cards||"<i>(empty)</i>"}</div>${cancel}`);window.__take=id=>{closeModal();res(id);};});}
-function humanWantStop(prompt){return new Promise(res=>{const ctx=prompt.stops%2===1?`A STOP is cancelling ${esc(prompt.actorName)}'s ${DEF[prompt.actionType].name}. Play YOUR Stop to negate it (let the action happen)?`:`${esc(prompt.actorName)} played <b>${DEF[prompt.actionType].name}</b>. Use a 🛑 STOP to cancel it?`;
-  modal(`<h2>🛑 Stop?</h2><p>${ctx}</p><div class="opts"><button onclick="__s(true)">Yes — play STOP</button><button onclick="__s(false)">No</button></div>`);window.__s=v=>{closeModal();res(v);};});}
+  const q=blind?`🤏 Pick a card to steal from <b>${esc(prompt.targetName)}</b>`:`👀 Take a card from <b>${esc(prompt.targetName)}</b>`;
+  const cancel=blind?"":`<div class="pbtns" style="margin-top:10px"><button class="pbtn choice grey" onclick="__take(0)">Take nothing</button></div>`;
+  showPrompt(`<div class="pq">${q}</div><div class="pbtns cards">${cards||"<i>(empty)</i>"}</div>${cancel}`);window.__take=id=>{hidePrompt();res(id);};});}
+function humanWantStop(prompt){return new Promise(res=>{const ctx=prompt.stops%2===1?`Counter the Stop on <b>${esc(prompt.actorName)}</b>'s ${DEF[prompt.actionType].name}?`:`<b>${esc(prompt.actorName)}</b> played ${DEF[prompt.actionType].art} ${DEF[prompt.actionType].name}.<br>Use your 🛑 STOP?`;
+  showPrompt(`<div class="pq">${ctx}</div><div class="pbtns"><button class="pbtn yes" onclick="__s(true)">YES</button><button class="pbtn no" onclick="__s(false)">NO</button></div>`);window.__s=v=>{hidePrompt();res(v);};});}
 
 function showWinner(view){ const w=view.winner; const me=view.players.find(p=>p.isYou); const iWon=me&&w.id===me.id;
   const stats=loadStats(); const board=Object.entries(stats).sort((a,b)=>b[1].wins-a[1].wins).slice(0,6).map(([n,s])=>`<div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>${s.wins}W / ${s.games}G</b></div>`).join("");
@@ -1424,7 +1448,7 @@ function showHistory(){
   modal(`<h2>📜 Notifications</h2><div class="histbox">${items}</div><div class="opts"><button style="background:#eee" onclick="closeModal()">Close</button></div>`);
 }
 function goHome(){ _leaving=true; try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
-  closeModal();chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
+  closeModal();hidePrompt();chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
   hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
   document.body.classList.add("home"); winShown=false; prevSnap=null; }
 
