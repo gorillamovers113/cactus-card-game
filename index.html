@@ -221,9 +221,41 @@
   @keyframes floatup{0%{transform:translateY(0) scale(.5);opacity:0;}15%{opacity:1;transform:translateY(-20px) scale(1.2);}100%{transform:translateY(-160px) scale(1);opacity:0;}}
   .toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--green-d);color:#fff;padding:9px 16px;
     border-radius:20px;z-index:55;font-weight:bold;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.3);animation:toastin .3s ease;}
-  @keyframes toastin{from{opacity:0;transform:transl(-50%,-10px);}to{opacity:1;}}
+  @keyframes toastin{from{opacity:0;transform:translate(-50%,-12px);}to{opacity:1;transform:translate(-50%,0);}}
   .unread{position:absolute;top:-2px;right:-2px;background:var(--red);color:#fff;border-radius:50%;width:16px;height:16px;font-size:10px;display:flex;align-items:center;justify-content:center;}
-  @media(max-width:560px){.card{width:72px;height:100px;}.card .art{font-size:30px;height:48px;}}
+  /* ---------- JUICE / celebration ---------- */
+  #confetti{position:fixed;inset:0;z-index:70;pointer-events:none;display:none;}
+  #confetti.on{display:block;}
+  .toaststack{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:55;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none;width:max-content;max-width:92vw;}
+  .toast2{background:rgba(15,40,27,.92);color:#fff;padding:8px 15px;border-radius:22px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:14px;
+    box-shadow:0 6px 16px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.15);display:flex;align-items:center;gap:8px;animation:t2in .3s ease, t2out .4s ease 2.4s forwards;}
+  @keyframes t2in{from{opacity:0;transform:translateY(-14px) scale(.9);}to{opacity:1;transform:none;}}
+  @keyframes t2out{to{opacity:0;transform:translateY(-10px) scale(.95);}}
+  .turnbanner{position:fixed;left:0;right:0;top:34%;text-align:center;z-index:48;pointer-events:none;}
+  .turnbanner span{display:inline-block;font-family:'Luckiest Guy',cursive;font-size:clamp(26px,7vw,40px);color:#fff;padding:10px 30px;border-radius:46px;
+    background:linear-gradient(180deg,#ffd34d,#e08e00);box-shadow:0 10px 30px rgba(0,0,0,.45);text-shadow:0 2px 0 #b85e00;animation:bannerSweep 1.25s cubic-bezier(.2,.8,.3,1) forwards;}
+  @keyframes bannerSweep{0%{transform:translateX(-130%) rotate(-7deg);opacity:0;}18%{transform:none;opacity:1;}78%{transform:none;opacity:1;}100%{transform:translateX(130%) rotate(7deg);opacity:0;}}
+  .discard-glow{animation:dglow .85s ease;}
+  @keyframes dglow{0%{box-shadow:0 0 0 0 rgba(244,180,0,0);}45%{box-shadow:0 0 0 5px rgba(244,180,0,.6),0 0 26px rgba(244,180,0,.75);}100%{box-shadow:0 0 0 0 rgba(244,180,0,0);}}
+  .flycard{position:fixed;width:70px;height:98px;z-index:46;pointer-events:none;perspective:600px;}
+  .flycard .fi{position:relative;width:100%;height:100%;transform-style:preserve-3d;}
+  .flycard .ff{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:10px;overflow:hidden;}
+  .flycard .ff.back{background-color:var(--cardbackcolor,#2b3b2e);background-image:var(--cardback,repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px));border:1px solid rgba(0,0,0,.5);box-shadow:inset 0 0 0 2px rgba(255,255,255,.12);}
+  .flycard .ff.front{transform:rotateY(180deg);}
+  .flycard .ff.front .card{width:70px;height:98px;animation:none;margin:0;box-shadow:none;border:1px solid var(--cardborder);}
+  .flychip{position:fixed;width:20px;height:20px;border-radius:50%;z-index:46;pointer-events:none;
+    background:radial-gradient(circle at 35% 28%,#9be79f,#3aa856 60%,#1f7a3a);border:2px dashed #fff;box-shadow:0 2px 5px rgba(0,0,0,.45);}
+  .trophy-cup{font-size:74px;text-align:center;display:block;animation:trophyIn .75s cubic-bezier(.2,1.5,.4,1) both;filter:drop-shadow(0 6px 10px rgba(0,0,0,.35));}
+  @keyframes trophyIn{0%{transform:scale(0) rotate(-40deg);opacity:0;}65%{transform:scale(1.35) rotate(10deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
+  .winbanner{animation:winPulse 1.6s ease-in-out infinite;}
+  @keyframes winPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.05);}}
+  .bigcactus{font-size:64px;margin:6px;display:inline-block;animation:bob 3s ease-in-out infinite;}
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-2deg);}50%{transform:translateY(-10px) rotate(2deg);}}
+  .floatcactus{position:fixed;bottom:-30px;font-size:30px;opacity:.16;z-index:0;pointer-events:none;animation:rise linear infinite;display:none;}
+  body.home .floatcactus{display:block;}
+  @keyframes rise{to{transform:translateY(-115vh) rotate(360deg);}}
+  @media(prefers-reduced-motion:reduce){*{animation-duration:.001s !important;}}
+  @media(max-width:560px){.card{width:74px;height:104px;}.card .art{font-size:31px;height:50px;}}
 </style>
 </head>
 <body data-theme="day">
@@ -305,6 +337,8 @@
   <div id="chatinput"><input id="chatText" maxlength="120" placeholder="Say something…"><button class="btn sm" id="chatSend">Send</button></div>
 </div>
 
+<canvas id="confetti"></canvas>
+<div class="toaststack" id="toastStack"></div>
 <div id="dealAnim"><div id="dealBanner"></div><div class="deckpile" id="deckPile"></div></div>
 <div id="overlay"><div class="modal" id="modal"></div></div>
 
@@ -372,17 +406,26 @@ function initAudio(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAud
 function tone(f,d,type="sine",g=0.08,when=0){ if(!SOUND||!AC)return; const o=AC.createOscillator(),v=AC.createGain();o.type=type;o.frequency.value=f;
   o.connect(v);v.connect(AC.destination);const t=AC.currentTime+when;v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+0.01);
   v.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.02);}
+function noiseBurst(d=0.18,g=0.05,hp=1200){ if(!SOUND||!AC)return; const n=Math.floor(AC.sampleRate*d);
+  const buf=AC.createBuffer(1,n,AC.sampleRate); const ch=buf.getChannelData(0); for(let i=0;i<n;i++)ch[i]=(Math.random()*2-1)*(1-i/n);
+  const src=AC.createBufferSource(); src.buffer=buf; const f=AC.createBiquadFilter(); f.type="highpass"; f.frequency.value=hp;
+  const v=AC.createGain(); v.gain.value=g; src.connect(f); f.connect(v); v.connect(AC.destination); src.start(); }
 const SFX={
-  play:()=>{tone(330,0.1,"triangle");},
-  point:()=>{tone(523,0.12,"sine",0.09);tone(784,0.18,"sine",0.09,0.1);},
-  steal:()=>{tone(440,0.12,"sawtooth",0.06);tone(300,0.14,"sawtooth",0.06,0.08);},
-  stop:()=>{tone(160,0.25,"square",0.07);},
-  draw:()=>{tone(420,0.07,"triangle",0.05);},
-  win:()=>{[523,659,784,1047].forEach((f,i)=>tone(f,0.25,"sine",0.09,i*0.12));},
-  chat:()=>{tone(660,0.08,"sine",0.05);},
+  play:()=>{tone(440,0.06,"triangle",0.05);noiseBurst(0.12,0.04,2000);},
+  flip:()=>{noiseBurst(0.09,0.05,2500);tone(520,0.05,"triangle",0.04,0.03);},
+  point:()=>{[523,659,784].forEach((f,i)=>tone(f,0.14,"sine",0.09,i*0.07));},
+  chip:()=>{tone(880,0.08,"sine",0.06);tone(1320,0.1,"sine",0.05,0.05);},
+  steal:()=>{tone(500,0.12,"sawtooth",0.06);tone(280,0.16,"sawtooth",0.06,0.09);noiseBurst(0.1,0.03,1500);},
+  stop:()=>{tone(180,0.28,"square",0.08);tone(120,0.3,"square",0.06,0.02);},
+  draw:()=>{noiseBurst(0.08,0.04,2200);tone(400,0.05,"triangle",0.04);},
+  shuffle:()=>{noiseBurst(0.22,0.05,1800);},
+  win:()=>{[523,659,784,1047,1319].forEach((f,i)=>tone(f,0.3,"sine",0.1,i*0.13));[392,523,659].forEach((f,i)=>tone(f,0.4,"triangle",0.05,0.66+i*0.04));},
+  chat:()=>{tone(680,0.08,"sine",0.05);},
   join:()=>{tone(587,0.1,"sine",0.06);tone(880,0.12,"sine",0.06,0.08);},
+  click:()=>{tone(300,0.04,"square",0.03);},
 };
 function sfx(n){ if(SFX[n])SFX[n](); }
+function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
 
 // ---------------- Identity / persisted ----------------
 let ME={name:localStorage.getItem("cactus_name")||"",avatar:localStorage.getItem("cactus_avatar")||"🌵",role:null,id:null};
@@ -631,7 +674,7 @@ async function applyAction(p,action){
     const cards=action.cardIds.map(id=>p.hand.find(c=>c.id===id)).filter(Boolean);
     const v=validateSet(cards); if(!v.ok)return false;
     for(const c of cards){p.hand.splice(p.hand.indexOf(c),1);G.discard.push(c);}
-    earnPoint(p,v.pts); sfx("point");
+    earnPoint(p,v.pts);
     pushLog(`<b>${esc(p.name)}</b> played 3 ${v.type==="wild"?"Wilds":DEF[v.type].name+"s"} → +${v.pts} pt${v.pts!==1?"s":""}! (can't be stopped)`,true);
     broadcast(); if(checkWin(p))return true; return true; // set ends turn
   }
@@ -652,12 +695,12 @@ async function resolveAction(actor,t,opt){
   switch(t){
     case "freepoint":
       if(negated){pushLog(`${esc(actor.name)}'s Free Point was STOPPED — no point (turn ends).`);}
-      else{earnPoint(actor,1);sfx("point");pushLog(`${esc(actor.name)} earned a free point! ⭐`);}
+      else{earnPoint(actor,1);pushLog(`${esc(actor.name)} earned a free point! ⭐`,true);}
       broadcast(); if(!negated&&checkWin(actor))return true; return true;
     case "stealpoint":{
       const tgt=pById(opt.target);
       if(negated){pushLog(`${esc(actor.name)}'s Steal a Point was STOPPED — point returned. Still their turn.`);broadcast();return false;}
-      if(tgt&&tgt.points>0){tgt.points--;actor.points++;sfx("steal");pushLog(`${esc(actor.name)} stole a point from ${esc(tgt.name)}! 💎`);broadcast();if(checkWin(actor))return true;return true;}
+      if(tgt&&tgt.points>0){tgt.points--;actor.points++;sfx("steal");pushLog(`${esc(actor.name)} stole a point from ${esc(tgt.name)}! 💎`,true);broadcast();if(checkWin(actor))return true;return true;}
       pushLog(`${tgt?esc(tgt.name):"target"} had no points.`);broadcast();return false; }
     case "draw3":
       if(negated){pushLog(`${esc(actor.name)}'s Draw 3 was STOPPED — turn continues.`);broadcast();return false;}
@@ -702,7 +745,7 @@ async function resolveStops(actor,t,targetId){
       const p=G.players[idx]; if(!p.hand.some(c=>c.t==="stop"))continue;
       const want=await decide(p.id,{kind:"stop",actorName:actor.name,actionType:t,targetId,stops},()=>aiWantStop(p,actor,t,targetId,stops));
       if(want){ const sc=p.hand.find(c=>c.t==="stop");p.hand.splice(p.hand.indexOf(sc),1);G.discard.push(sc);stops++;sfx("stop");
-        pushLog(`🛑 ${esc(p.name)} played STOP${stops>1?" (negating the previous Stop!)":` on ${esc(actor.name)}'s ${DEF[t].name}`}.`);broadcast();
+        pushLog(`🛑 ${esc(p.name)} played STOP${stops>1?" (negating the previous Stop!)":` on ${esc(actor.name)}'s ${DEF[t].name}`}.`,true);broadcast();
         last=p.id;played=true;break; }
     }
     if(!played)break;
@@ -789,16 +832,17 @@ function grabName(){ const n=$("nameInput").value.trim()||("Player"); ME.name=n.
 
 // ---- screen transitions ----
 function enterLobby(){ // HOST view of lobby
-  hide("home");show("topbar");show("lobby");hide("game");hide("youbar");
+  hide("home");show("topbar");show("lobby");hide("game");hide("youbar");document.body.classList.remove("home");
   $("rcChip").textContent = ROOM==="SOLO"?"Solo":("Room "+ROOM);
   $("lobbyCode").textContent = ROOM==="SOLO"?"SOLO":ROOM;
   if(ROOM==="SOLO") $("copyLinkBtn").classList.add("hidden"); else $("copyLinkBtn").classList.remove("hidden");
   renderLobby();
 }
-function enterLobbyClient(view){ hide("home");show("topbar");show("lobby");hide("game");hide("youbar");
+function enterLobbyClient(view){ hide("home");show("topbar");show("lobby");hide("game");hide("youbar");document.body.classList.remove("home");
   $("rcChip").textContent="Room "+view.room; $("lobbyCode").textContent=view.room;
   $("copyLinkBtn").classList.remove("hidden"); renderLobbyUI(view); }
 function enterGameScreen(){ hide("home");hide("lobby");show("topbar");show("game");
+  winShown=false; prevSnap=null;
   const n=(G&&G.players&&G.players.length)||(lastView&&lastView.players&&lastView.players.length)||3;
   playDealAnimation(n); }
 
@@ -817,6 +861,7 @@ function playDealAnimation(numPlayers){
   // shuffle: riffle two halves a few times
   let shuffles=0;
   function riffle(){
+    sfx("shuffle");
     stack.forEach((c,i)=>{ const left=i%2===0; const dx=left?-46:46; const rot=left?-10:10;
       c.animate([{transform:`translate(0,0) rotate(0)`},{transform:`translate(${dx}px,${-8-i}px) rotate(${rot}deg)`},{transform:`translate(0,0) rotate(0)`}],{duration:420,easing:"ease-in-out"}); });
     if(++shuffles<3) setTimeout(riffle,300); else setTimeout(deal,360);
@@ -923,15 +968,55 @@ function updateRules(partial){
 function startGameCtl(){ if(ME.role==="host") doStart(false); else clientSend({kind:"requestStart"}); }
 function returnToLobbyCtl(){ closeModal(); if(ME.role==="host"){ G.started=false; enterLobby(); broadcast(); } else clientSend({kind:"requestLobby"}); }
 
+// ---- juice / animation helpers ----
+const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+function rectOf(el){ return el?el.getBoundingClientRect():null; }
+function flyToDiscard(type){
+  if(REDUCE) return; const dEl=$("discardSlot"); const dr=rectOf(dEl); if(!dr)return;
+  const tx=dr.left+dr.width/2-35, ty=dr.top+dr.height/2-49; const scale=Math.max(.5,dr.width/70);
+  const fly=document.createElement("div"); fly.className="flycard";
+  fly.innerHTML=`<div class="fi"><div class="ff back"></div><div class="ff front">${cardHTML({id:-2,t:type})}</div></div>`;
+  fly.style.left=tx+"px"; fly.style.top=(ty-175)+"px"; document.body.appendChild(fly);
+  fly.animate([{transform:`translateY(0) scale(.6)`},{transform:`translateY(${175}px) scale(${scale})`}],{duration:440,easing:"cubic-bezier(.3,.75,.35,1)",fill:"forwards"});
+  fly.querySelector(".fi").animate([{transform:"rotateY(0deg)"},{transform:"rotateY(180deg)"}],{duration:440,easing:"ease-out",fill:"forwards"});
+  sfx("flip");
+  setTimeout(()=>{ fly.remove(); if(dEl){dEl.classList.add("discard-glow"); setTimeout(()=>dEl.classList.remove("discard-glow"),850);} },450);
+}
+function chipFlyTo(targetEl,count){
+  if(REDUCE||!targetEl) return; const srcEl=document.querySelector(".pilecard.point"); const sr=rectOf(srcEl),tr=rectOf(targetEl); if(!sr||!tr)return;
+  const n=Math.min(count,5);
+  for(let i=0;i<n;i++){ const chip=document.createElement("div"); chip.className="flychip";
+    const sx=sr.left+sr.width/2-10, sy=sr.top+sr.height/2-10; chip.style.left=sx+"px"; chip.style.top=sy+"px"; document.body.appendChild(chip);
+    const dx=(tr.left+10)-sx, dy=(tr.top+tr.height/2-10)-sy;
+    chip.animate([{transform:"scale(.5)",opacity:.3},{transform:`translate(${dx*0.5}px,${dy*0.5-34}px) scale(1.25)`,opacity:1},{transform:`translate(${dx}px,${dy}px) scale(1)`,opacity:1}],{duration:540+i*70,easing:"cubic-bezier(.3,.6,.3,1)",fill:"forwards"});
+    setTimeout(()=>chip.remove(),620+i*70);
+  }
+  sfx("chip");
+}
+function turnBanner(text){ if(REDUCE)return; const b=document.createElement("div"); b.className="turnbanner"; b.innerHTML=`<span>${text}</span>`; document.body.appendChild(b); setTimeout(()=>b.remove(),1300); }
+function toast2(html){ const s=$("toastStack"); if(!s)return; const d=document.createElement("div"); d.className="toast2"; d.innerHTML=html; s.appendChild(d); while(s.children.length>3)s.removeChild(s.firstChild); setTimeout(()=>{ if(d.parentNode)d.remove(); },2900); }
+let confettiRAF=null;
+function confettiBurst(dur=2800){
+  const cv=$("confetti"); if(!cv)return; cv.classList.add("on"); const ctx=cv.getContext("2d");
+  const W=cv.width=window.innerWidth, H=cv.height=window.innerHeight;
+  const colors=["#f4b400","#4caf50","#e53935","#29b6f6","#8e5bd0","#ec407a","#ffffff","#ffd34d"];
+  const parts=[]; for(let i=0;i<160;i++)parts.push({x:Math.random()*W,y:-20-Math.random()*H*0.4,vx:(Math.random()-0.5)*3.5,vy:2+Math.random()*4,sz:6+Math.random()*8,rot:Math.random()*6,vr:(Math.random()-0.5)*0.35,c:rand(colors)});
+  let start=null;
+  function frame(ts){ if(start==null)start=ts; const el=ts-start; ctx.clearRect(0,0,W,H);
+    parts.forEach(p=>{ p.x+=p.vx; p.y+=p.vy; p.vy+=0.045; p.rot+=p.vr; ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.sz/2,-p.sz/2,p.sz,p.sz*0.62); ctx.restore(); });
+    if(el<dur && !REDUCE){ confettiRAF=requestAnimationFrame(frame); } else { ctx.clearRect(0,0,W,H); cv.classList.remove("on"); } }
+  cancelAnimationFrame(confettiRAF); if(REDUCE){return;} confettiRAF=requestAnimationFrame(frame);
+}
+
 // ---- game render (view-driven) ----
-let prevPoints={};
+let prevPoints={}, prevSnap=null, winShown=false;
 function renderGameFor(view){
   lastView=view;
   $("rcChip").textContent = ROOM==="SOLO"?"Solo":("Room "+view.room);
   // opponents = everyone who isn't you
   const oc=$("opponents");oc.innerHTML="";
   view.players.filter(p=>!p.isYou).forEach(p=>{const d=document.createElement("div");
-    d.className="opp"+(p.isActive?" turn":"")+(p.connected?"":" off");
+    d.className="opp"+(p.isActive?" turn":"")+(p.connected?"":" off"); d.dataset.id=p.id;
     const tok=tokens(p.points,p.id);
     d.innerHTML=`<div class="nm"><span class="who"><span class="em">${p.avatar}</span>${esc(p.name)} ${p.isHost?'<span class="badge-host">H</span>':''}${p.isAI?'🤖':''}</span><span style="font-size:11px;opacity:.6">${p.handCount}🃏</span></div>
       <div class="mini-row">${Array(p.handCount).fill('<div class="mini"></div>').join("")}</div>
@@ -952,9 +1037,24 @@ function renderGameFor(view){
     renderHand(view,you);
     renderControls(view,you);
   }
+  // ---- juice: react to changes since last view ----
+  const first=!prevSnap;
+  if(!first){
+    if(view.discardTop && view.discardTop!==prevSnap.discardTop) flyToDiscard(view.discardTop);
+    view.players.forEach(p=>{ const was=prevSnap.points[p.id]||0; if(p.points>was){
+      const tgt=p.isYou?$("youPts"):(oc.querySelector('.opp[data-id="'+p.id+'"] .pts')); chipFlyTo(tgt,p.points-was); sfx("point"); if(p.isYou)buzz(70); } });
+    if(view.activeId!==prevSnap.activeId && you && view.activeId===you.id && view.phase==="playing"){ turnBanner("Your turn!"); buzz(40); }
+    // toast notable events (find last occurrence of previously-seen entry)
+    let si=-1; for(let k=view.log.length-1;k>=0;k--){ if(view.log[k].html===prevSnap.lastLog){si=k;break;} }
+    const fresh = si>=0? view.log.slice(si+1) : view.log.slice(-1);
+    fresh.filter(e=>e.big && e.html.indexOf("Game start")<0).forEach(e=>toast2(e.html));
+  }
   // winner
-  if(view.phase==="over"&&view.winner&&!view._shown){ showWinner(view); }
+  if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, points:{}, lastLog:(view.log[view.log.length-1]||{}).html};
+  view.players.forEach(p=>prevSnap.points[p.id]=p.points);
+  if(view.phase==="over") prevSnap=null; // reset for next game
 }
 function tokens(n,id){let s="";const pop=(prevPoints[id]!=null&&n>prevPoints[id]);for(let i=0;i<Math.min(n,15);i++){const isNew=pop&&i>=prevPoints[id];s+=`<span class="token${isNew?' pop':''}"></span>`;}return s;}
 function cardHTML(c,opt={}){const d=DEF[c.t];const sel=opt.sel?" sel":"";const idA=opt.id?`id="${opt.id}"`:"";const clk=opt.clickable?`onclick="onCardClick(${c.id})"`:"";
@@ -1059,11 +1159,13 @@ function pickFromHand(prompt){return new Promise(res=>{
 function humanWantStop(prompt){return new Promise(res=>{const ctx=prompt.stops%2===1?`A STOP is cancelling ${esc(prompt.actorName)}'s ${DEF[prompt.actionType].name}. Play YOUR Stop to negate it (let the action happen)?`:`${esc(prompt.actorName)} played <b>${DEF[prompt.actionType].name}</b>. Use a 🛑 STOP to cancel it?`;
   modal(`<h2>🛑 Stop?</h2><p>${ctx}</p><div class="opts"><button onclick="__s(true)">Yes — play STOP</button><button onclick="__s(false)">No</button></div>`);window.__s=v=>{closeModal();res(v);};});}
 
-function showWinner(view){ view._shown=true; const w=view.winner; const me=view.players.find(p=>p.isYou);
+function showWinner(view){ const w=view.winner; const me=view.players.find(p=>p.isYou); const iWon=me&&w.id===me.id;
   const stats=loadStats(); const board=Object.entries(stats).sort((a,b)=>b[1].wins-a[1].wins).slice(0,6).map(([n,s])=>`<div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>${s.wins}W / ${s.games}G</b></div>`).join("");
   const amCtl=(view.controllers||["p0"]).includes(ME.id);
   const ctlNote = amCtl?"You won — you now control the settings for the next game!":"";
-  modal(`<div class="winbanner">${me&&w.id===me.id?"🏆 You win! 🏆":w.avatar+" "+esc(w.name)+" wins!"}</div>
+  confettiBurst(iWon?3600:2600); sfx("win"); buzz(iWon?[60,40,120]:60);
+  modal(`<div class="trophy-cup">${iWon?"🏆":w.avatar}</div>
+    <div class="winbanner" style="margin-top:4px">${iWon?"You win!":esc(w.name)+" wins!"}</div>
     <p style="text-align:center">Reached the goal of ${view.goal} points.${ctlNote?'<br><span style="color:var(--green-d);font-weight:bold">'+ctlNote+'</span>':''}</p>
     <div class="panel" style="text-align:left"><div style="font-weight:bold;margin-bottom:4px">🏅 Win tracker</div>${board||"<i>No stats yet</i>"}</div>
     <div class="opts">${amCtl?'<button onclick="returnToLobbyCtl()">⚙️ Set up next game</button>':'<button style="background:#eee" onclick="closeModal()">Close</button>'}<button style="background:#eee" onclick="goHome()">Leave to home</button></div>`);}
@@ -1085,7 +1187,8 @@ function toggleTheme(){const b=document.body;const night=b.getAttribute("data-th
 function toggleSound(){SOUND=!SOUND;$("soundBtn").textContent=SOUND?"🔊":"🔇";if(SOUND){initAudio();sfx("draw");}}
 function goHome(){ try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
   closeModal();chatOpen=false;$("chatpanel").classList.remove("on");
-  hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus(""); }
+  hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
+  document.body.classList.add("home"); winShown=false; prevSnap=null; }
 
 function copyShare(){ if(ROOM==="SOLO")return; const url=location.origin+location.pathname+"#"+ROOM;
   navigator.clipboard&&navigator.clipboard.writeText(url).then(()=>toast("Share link copied!"),()=>toast(url)); }
@@ -1107,6 +1210,10 @@ function showRules(){ modal(`<h2>How to play 🌵</h2>
 function boot(){
   if(localStorage.getItem("cactus_theme")==="night"){document.body.setAttribute("data-theme","night");$("themeToggle").textContent="☀️ Day mode";}
   loadArt(); applyCardStyle("classic");
+  document.body.classList.add("home");
+  // floating background cacti (home only)
+  if(!REDUCE){["🌵","🌵","🌵","🌷","🌶️","🪨"].forEach((e,i)=>{ const c=document.createElement("div"); c.className="floatcactus"; c.textContent=e;
+    c.style.left=(8+i*16)+"%"; c.style.fontSize=(24+Math.random()*26)+"px"; c.style.animationDuration=(11+i*3)+"s"; c.style.animationDelay=(-i*3)+"s"; document.body.appendChild(c); });}
   $("nameInput").value=ME.name; renderAvatars(); buildReactBar();
   // hash auto-join
   const h=(location.hash||"").replace("#","").trim().toUpperCase();
