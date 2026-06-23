@@ -244,6 +244,18 @@
   .playedpop .card{margin:0 auto;transform:scale(1.32);box-shadow:0 18px 34px rgba(0,0,0,.55);}
   @keyframes ppin{from{opacity:0;transform:translateX(-50%) scale(.55) rotate(-6deg);}to{opacity:1;transform:translateX(-50%) scale(1);}}
   @keyframes ppout{to{opacity:0;transform:translateX(-50%) translateY(-34px) scale(.85);}}
+  /* dramatic card slam */
+  #slam{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;}
+  #slam.on{display:flex;}
+  #slam .flash{position:absolute;inset:0;opacity:0;animation:slamFlash .7s ease;}
+  #slam .slamcontent{position:relative;text-align:center;animation:slamShake .55s ease;}
+  #slam .slam-who{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(15px,4vw,22px);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.8);margin-bottom:4px;}
+  #slam .slam-big{font-family:'Luckiest Guy',cursive;font-size:clamp(46px,14vw,108px);line-height:1;letter-spacing:1px;
+    -webkit-text-stroke:2px rgba(0,0,0,.55);text-shadow:0 6px 0 rgba(0,0,0,.35),0 0 40px currentColor;animation:slamIn .42s cubic-bezier(.2,1.7,.4,1) both;}
+  #slam .card{transform:scale(1.55);margin:26px auto 0;box-shadow:0 22px 44px rgba(0,0,0,.6);animation:slamIn .42s .08s both;}
+  @keyframes slamFlash{0%{opacity:0;}25%{opacity:.6;}100%{opacity:0;}}
+  @keyframes slamIn{0%{transform:scale(0) rotate(-14deg);opacity:0;}65%{transform:scale(1.22) rotate(3deg);}100%{transform:scale(1) rotate(0);opacity:1;}}
+  @keyframes slamShake{0%,100%{transform:translateX(0);}15%{transform:translateX(-14px);}30%{transform:translateX(14px);}45%{transform:translateX(-9px);}60%{transform:translateX(9px);}75%{transform:translateX(-4px);}}
   .turnbanner{position:fixed;left:0;right:0;top:34%;text-align:center;z-index:48;pointer-events:none;}
   .turnbanner span{display:inline-block;font-family:'Luckiest Guy',cursive;font-size:clamp(26px,7vw,40px);color:#fff;padding:10px 30px;border-radius:46px;
     background:linear-gradient(180deg,#ffd34d,#e08e00);box-shadow:0 10px 30px rgba(0,0,0,.45);text-shadow:0 2px 0 #b85e00;animation:bannerSweep 1.25s cubic-bezier(.2,.8,.3,1) forwards;}
@@ -353,6 +365,7 @@
   <div id="chatinput"><input id="chatText" maxlength="120" placeholder="Say something…"><button class="btn sm" id="chatSend">Send</button></div>
 </div>
 
+<div id="slam"></div>
 <canvas id="confetti"></canvas>
 <div class="toaststack" id="toastStack"></div>
 <div id="dealAnim"><div id="dealBanner"></div><div class="deckpile" id="deckPile"></div></div>
@@ -386,6 +399,7 @@ const CHAR_TYPES=["charlie","spike","walter"];
 const isChar=t=>!!DEF[t].char;
 const isStoppable=t=>["freepoint","stealpoint","seesteal","stealcard","request","swap","draw3","stop"].includes(t);
 const needsTarget=t=>["stealpoint","seesteal","stealcard","request","swap"].includes(t);
+const DRAMATIC=["stop","stealpoint","freepoint","swap"]; // get the big flashing slam
 let WILDBONUS=3;
 const setPoints=type=>type==="walter"?3:type==="spike"?2:type==="wild"?WILDBONUS:1;
 const AVATARS=["🌵","🌷","🌶️","🍐","🦂","🌞","🐍","🪨","🌴","🦎","🏜️","🤠"];
@@ -575,7 +589,7 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 
 // ---------------- Game state (host) ----------------
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
-  over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,
+  over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,bigEvent:null,_bigId:0,
   rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
 function controllerIds(){ return G?[G.hostId,G.lastWinnerId].filter(Boolean):["p0"]; }
@@ -599,7 +613,7 @@ function doStart(isRematch){
   const n=G.players.length;
   G.goal = goalSel==="auto"?goalFor(n):parseInt(goalSel);
   for(let rr=0;rr<hand;rr++)for(const p of G.players)p.hand.push(G.draw.pop());
-  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[];
+  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null;
   const deckNote = decks>1?` · ${decks} decks`:"";
   pushLog(`<b>Game start!</b> ${n} player${n!==1?"s":""}. First to ${G.goal} points wins!${deckNote} 🌵`,true);
   enterGameScreen();
@@ -631,7 +645,7 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-30),
-    style:G.rules.style, controllers:controllerIds(), lastAction:G.lastAction,
+    style:G.rules.style, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent,
   };
 }
 function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
@@ -706,6 +720,7 @@ async function applyAction(p,action){
     p.hand.splice(p.hand.indexOf(card),1); G.discard.push(card); sfx("play");
     const tname=action.target!=null?((pById(action.target)||{}).name||""):"";
     G.lastAction={id:++G._actId, actorId:p.id, name:p.name, avatar:p.avatar, t:card.t, kind:"card", label:DEF[card.t].name, target:tname, requestType:action.requestType||null};
+    if(DRAMATIC.includes(card.t)) G.bigEvent={id:++G._bigId, t:card.t, name:p.name, avatar:p.avatar};
     pushLog(`<b>${esc(p.name)}</b> played ${DEF[card.t].name}${tname?` on ${esc(tname)}`:""}${action.requestType?` (wants a ${DEF[action.requestType].name})`:""}.`);
     broadcast();
     return await resolveAction(p,card.t,action);
@@ -770,6 +785,7 @@ async function resolveStops(actor,t,targetId){
       const p=G.players[idx]; if(!p.hand.some(c=>c.t==="stop"))continue;
       const want=await decide(p.id,{kind:"stop",actorName:actor.name,actionType:t,targetId,stops},()=>aiWantStop(p,actor,t,targetId,stops));
       if(want){ const sc=p.hand.find(c=>c.t==="stop");p.hand.splice(p.hand.indexOf(sc),1);G.discard.push(sc);stops++;sfx("stop");
+        G.bigEvent={id:++G._bigId, t:"stop", name:p.name, avatar:p.avatar};
         pushLog(`🛑 ${esc(p.name)} played STOP${stops>1?" (negating the previous Stop!)":` on ${esc(actor.name)}'s ${DEF[t].name}`}.`,true);broadcast();
         last=p.id;played=true;break; }
     }
@@ -1033,6 +1049,22 @@ function flyFromDeck(targetEl,count){
   }
   sfx("draw");
 }
+let slamTimer=null;
+function showSlam(ev){
+  if(!ev)return; const d=DEF[ev.t];
+  const label = ev.t==="stop" ? "STOP!" : (d.name.toUpperCase()+"!");
+  if(REDUCE){ toast2(`${ev.avatar} ${esc(ev.name)} played ${esc(d.name)}!`); }
+  else {
+    const s=$("slam");
+    s.innerHTML=`<div class="flash" style="background:radial-gradient(circle at 50% 45%, ${d.color}, transparent 65%)"></div>`+
+      `<div class="slamcontent"><div class="slam-who">${ev.avatar} <b>${esc(ev.name)}</b> plays</div>`+
+      `<div class="slam-big" style="color:${d.color}">${label}</div>${cardHTML({id:-4,t:ev.t})}</div>`;
+    s.classList.add("on");
+    clearTimeout(slamTimer); slamTimer=setTimeout(()=>s.classList.remove("on"),1700);
+  }
+  sfx(ev.t==="stop"?"stop":ev.t==="stealpoint"?"steal":ev.t==="freepoint"?"point":"play");
+  buzz([50,40,90]);
+}
 function showPlayedCard(la){
   if(!la)return;
   if(REDUCE){ toast2(`${la.avatar} ${esc(la.name)} played ${la.kind==="set"?"a set":esc(la.label||DEF[la.t].name)}`); sfx("play"); return; }
@@ -1092,9 +1124,12 @@ function renderGameFor(view){
   // ---- juice: react to changes since last view ----
   const first=!prevSnap;
   if(!first){
+    const bigNew = view.bigEvent && view.bigEvent.id!==prevSnap.bigId;
+    if(bigNew) showSlam(view.bigEvent);
     if(view.discardTop && view.discardTop!==prevSnap.discardTop){
       const la=view.lastAction; const laNew=la&&la.id!==prevSnap.lastActionId; const mine=la&&you&&la.actorId===you.id;
-      if(laNew&&!mine) showPlayedCard(la); else flyToDiscard(view.discardTop);
+      if(bigNew){ /* slam shows the card big; skip extra card-to-discard motion */ }
+      else if(laNew&&!mine) showPlayedCard(la); else flyToDiscard(view.discardTop);
     }
     // cards drawn from the deck -> slide from the draw pile to that player
     const drawDrop = (prevSnap.drawCount||0) - view.drawCount;
@@ -1111,7 +1146,7 @@ function renderGameFor(view){
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
-  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
   view.players.forEach(p=>{prevSnap.points[p.id]=p.points; prevSnap.handCounts[p.id]=p.handCount;});
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
