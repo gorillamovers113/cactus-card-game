@@ -228,6 +228,16 @@
   .pickback::after{content:"";position:absolute;inset:6px;border-radius:5px;border:1.5px solid rgba(255,255,255,.22);}
   .pickback:hover{transform:translateY(-8px) scale(1.05);box-shadow:0 12px 18px rgba(0,0,0,.4),inset 0 0 0 2px var(--gold);}
   .winbanner{font-size:24px;font-weight:bold;text-align:center;color:var(--gold);}
+  .setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 2px;border-bottom:1px solid var(--panelbd);flex-wrap:wrap;}
+  .setrow.col{flex-direction:column;align-items:stretch;}
+  .setrow>span{font-weight:bold;font-size:15px;}
+  .setnote{font-size:11px;opacity:.65;margin-top:6px;}
+  .segmented{display:inline-flex;border-radius:12px;overflow:hidden;border:2px solid var(--panelbd);background:var(--paper);}
+  .segmented button{font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;border:none;background:transparent;color:var(--txt);padding:8px 14px;cursor:pointer;}
+  .segmented button.on{background:var(--green);color:#fff;}
+  .histbox{max-height:55vh;overflow-y:auto;margin-top:8px;display:flex;flex-direction:column;gap:4px;}
+  .histrow{font-size:13px;padding:6px 9px;border-radius:9px;background:var(--green-vl);}
+  .histrow.big{font-weight:bold;}
   /* ---------- CHAT ---------- */
   #chatpanel{position:fixed;right:0;bottom:0;top:0;width:300px;max-width:85vw;background:var(--panel);
     border-left:3px solid var(--green);z-index:40;transform:translateX(100%);transition:.22s;display:flex;flex-direction:column;
@@ -330,7 +340,7 @@
   </div>
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.0</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.1</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -338,8 +348,8 @@
 <div id="topbar" class="hidden">
   <div class="ti"><span>🌵 What's The Point?</span> <span class="rc" id="rcChip" title="Tap to copy share link"></span></div>
   <div class="tools">
-    <button class="icbtn" id="themeBtn2" title="Theme" aria-label="Toggle day/night theme">🌙</button>
-    <button class="icbtn" id="soundBtn" title="Sound" aria-label="Toggle sound">🔊</button>
+    <button class="icbtn" id="historyBtn" title="Notifications" aria-label="Notifications history">📜</button>
+    <button class="icbtn" id="settingsBtn" title="Settings" aria-label="Settings">⚙️</button>
     <button class="icbtn" id="chatBtn" title="Chat" aria-label="Open chat" style="position:relative">💬<span class="unread hidden" id="unread">0</span></button>
     <button class="icbtn red" id="leaveBtn" title="Leave" aria-label="Leave game">✕</button>
   </div>
@@ -691,7 +701,7 @@ function buildView(forId){
       isAI:!!p.isAI,isHost:p.id==="p0",connected:p.connected!==false,isActive:(i===G.cur&&!G.over),isYou:p.id===forId})),
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
-    activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-30),
+    activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-50),
     style:G.rules.style, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent,
   };
 }
@@ -726,12 +736,11 @@ function submitActionFrom(playerId,action){
 async function beginTurn(){
   if(G.over)return;
   const p=curP();
-  pushLog(`— ${p.avatar} ${esc(p.name)}'s turn —`);
   for(const q of G.players)q._usedUtility=false;
   broadcast();
   if(p.hand.length===0){ // forced draw 3
-    pushLog(`${esc(p.name)} has no cards → Draw 3 and end turn.`); broadcast();
-    await sleep(700); for(let i=0;i<3;i++)drawCard(p); sfx("draw"); broadcast(); return endTurn();
+    broadcast();
+    await sleep(700); for(let i=0;i<3;i++)drawCard(p); sfx("draw"); pushLog(`${esc(p.name)} had no cards — drew 3 and passed.`); broadcast(); return endTurn();
   }
   if(p.isAI||p.connected===false){ await sleep(650); return aiTurn(p); }
   // human turn: loop receiving actions
@@ -759,7 +768,7 @@ async function applyAction(p,action){
     for(const c of cards){p.hand.splice(p.hand.indexOf(c),1);G.discard.push(c);}
     earnPoint(p,v.pts);
     G.lastAction={id:++G._actId, actorId:p.id, name:p.name, avatar:p.avatar, t:v.type, kind:"set", pts:v.pts};
-    pushLog(`<b>${esc(p.name)}</b> played 3 ${v.type==="wild"?"Wilds":DEF[v.type].name+"s"} → +${v.pts} pt${v.pts!==1?"s":""}! (can't be stopped)`,true);
+    pushLog(`<b>${esc(p.name)}</b> scored +${v.pts} with three ${v.type==="wild"?"Wilds":DEF[v.type].name+"s"}! 🌵`,true);
     broadcast(); if(checkWin(p))return true; return true; // set ends turn
   }
   if(action.kind==="playCard"){
@@ -768,7 +777,6 @@ async function applyAction(p,action){
     const tname=action.target!=null?((pById(action.target)||{}).name||""):"";
     G.lastAction={id:++G._actId, actorId:p.id, name:p.name, avatar:p.avatar, t:card.t, kind:"card", label:DEF[card.t].name, target:tname, requestType:action.requestType||null};
     if(DRAMATIC.includes(card.t)) G.bigEvent={id:++G._bigId, t:card.t, name:p.name, avatar:p.avatar};
-    pushLog(`<b>${esc(p.name)}</b> played ${DEF[card.t].name}${tname?` on ${esc(tname)}`:""}${action.requestType?` (wants a ${DEF[action.requestType].name})`:""}.`);
     broadcast();
     return await resolveAction(p,card.t,action);
   }
@@ -781,42 +789,42 @@ async function resolveAction(actor,t,opt){
   if(isStoppable(t)){ const targetId = opt.target!=null?opt.target:(opt.swapPair?opt.swapPair[0]:null); negated=await resolveStops(actor,t,targetId); }
   switch(t){
     case "freepoint":
-      if(negated){pushLog(`${esc(actor.name)}'s Free Point was STOPPED — no point (turn ends).`);}
-      else{earnPoint(actor,1);pushLog(`${esc(actor.name)} earned a free point! ⭐`,true);}
+      if(negated){pushLog(`${esc(actor.name)}'s Free Point was blocked 🛑`,true);}
+      else{earnPoint(actor,1);pushLog(`${esc(actor.name)} earned a point ⭐`,true);}
       broadcast(); if(!negated&&checkWin(actor))return true; return true;
     case "stealpoint":{
       const tgt=pById(opt.target);
-      if(negated){pushLog(`${esc(actor.name)}'s Steal a Point was STOPPED — point returned. Still their turn.`);broadcast();return false;}
-      if(tgt&&tgt.points>0){tgt.points--;actor.points++;sfx("steal");pushLog(`${esc(actor.name)} stole a point from ${esc(tgt.name)}! 💎`,true);broadcast();if(checkWin(actor))return true;return true;}
-      pushLog(`${tgt?esc(tgt.name):"target"} had no points.`);broadcast();return false; }
+      if(negated){pushLog(`${esc(actor.name)}'s point-steal was blocked 🛑`,true);broadcast();return false;}
+      if(tgt&&tgt.points>0){tgt.points--;actor.points++;sfx("steal");pushLog(`${esc(actor.name)} stole a point from ${esc(tgt.name)} 💎`,true);broadcast();if(checkWin(actor))return true;return true;}
+      pushLog(`${esc(actor.name)} tried to steal — ${tgt?esc(tgt.name):"they"} had no points`,true);broadcast();return false; }
     case "draw3":
-      if(negated){pushLog(`${esc(actor.name)}'s Draw 3 was STOPPED — turn continues.`);broadcast();return false;}
-      {let n=0;for(let i=0;i<3;i++)if(drawCard(actor))n++;sfx("draw");pushLog(`${esc(actor.name)} drew ${n} cards (Draw 3). Turn ends.`);}broadcast();return true;
+      if(negated){pushLog(`${esc(actor.name)}'s Draw 3 was blocked 🛑`,true);broadcast();return false;}
+      {let n=0;for(let i=0;i<3;i++)if(drawCard(actor))n++;sfx("draw");pushLog(`${esc(actor.name)} drew 3 cards ➕`,true);}broadcast();return true;
     case "seesteal":{
-      if(negated){pushLog(`${esc(actor.name)}'s See and Steal was STOPPED.`);broadcast();return false;}
+      if(negated){pushLog(`${esc(actor.name)}'s See & Steal was blocked 🛑`,true);broadcast();return false;}
       const tgt=pById(opt.target); if(tgt&&tgt.hand.length){
         const pick=await decide(actor.id,{kind:"pickHand",targetName:tgt.name,cards:tgt.hand.map(c=>({id:c.id,t:c.t}))},()=>aiPickFromHand(tgt,actor));
-        const c=tgt.hand.find(x=>x.id===pick)||null; if(c){moveCard(tgt,actor,c);sfx("steal");pushLog(`${esc(actor.name)} looked at ${esc(tgt.name)}'s hand and took a card.`);}
+        const c=tgt.hand.find(x=>x.id===pick)||null; if(c){moveCard(tgt,actor,c);sfx("steal");pushLog(`${esc(actor.name)} peeked at ${esc(tgt.name)} and took a card 👀`,true);}
       } broadcast(); return false; }
     case "stealcard":{
-      if(negated){pushLog(`${esc(actor.name)}'s Steal a Card was STOPPED.`);broadcast();return false;}
+      if(negated){pushLog(`${esc(actor.name)}'s Steal a Card was blocked 🛑`,true);broadcast();return false;}
       const tgt=pById(opt.target);
       if(tgt&&tgt.hand.length){
         const pick=await decide(actor.id,{kind:"pickHand",blind:true,targetName:tgt.name,cards:tgt.hand.map(c=>({id:c.id}))},()=>rand(tgt.hand).id);
         const c=tgt.hand.find(x=>x.id===pick)||rand(tgt.hand);
         moveCard(tgt,actor,c); sfx("steal");
-        pushLog(`${esc(actor.name)} took a face-down card from ${esc(tgt.name)}'s hand.`);
+        pushLog(`${esc(actor.name)} took a card from ${esc(tgt.name)} 🤏`,true);
       }
       broadcast(); return false; }
     case "request":{
-      if(negated){pushLog(`${esc(actor.name)}'s Request was STOPPED.`);broadcast();return false;}
+      if(negated){pushLog(`${esc(actor.name)}'s Request was blocked 🛑`,true);broadcast();return false;}
       const tgt=pById(opt.target),rt=opt.requestType; const have=tgt&&tgt.hand.find(c=>c.t===rt);
-      if(have){moveCard(tgt,actor,have);sfx("steal");pushLog(`${esc(tgt.name)} had a ${DEF[rt].name} → gave it to ${esc(actor.name)}! 🙏`);}
-      else pushLog(`${tgt?esc(tgt.name):"They"} had no ${DEF[rt].name}. Request fails.`);
+      if(have){moveCard(tgt,actor,have);sfx("steal");pushLog(`${esc(tgt.name)} gave ${esc(actor.name)} a ${DEF[rt].name} 🙏`,true);}
+      else pushLog(`${esc(actor.name)} asked ${tgt?esc(tgt.name):"someone"} for a ${DEF[rt].name} — none`,true);
       broadcast(); return false; }
     case "swap":{
-      if(negated){pushLog(`${esc(actor.name)}'s Swap Hands was STOPPED.`);broadcast();return false;}
-      const a=pById(opt.swapPair[0]),b=pById(opt.swapPair[1]); if(a&&b){const t2=a.hand;a.hand=b.hand;b.hand=t2;pushLog(`${esc(actor.name)} swapped ${esc(a.name)} & ${esc(b.name)}'s hands! 🔄`);}
+      if(negated){pushLog(`${esc(actor.name)}'s Swap Hands was blocked 🛑`,true);broadcast();return false;}
+      const a=pById(opt.swapPair[0]),b=pById(opt.swapPair[1]); if(a&&b){const t2=a.hand;a.hand=b.hand;b.hand=t2;pushLog(`${esc(actor.name)} swapped hands: ${esc(a.name)} ↔ ${esc(b.name)} 🔄`,true);}
       broadcast(); return false; }
   }
   return false;
@@ -830,10 +838,10 @@ async function resolveStops(actor,t,targetId){
     let played=false;
     for(const idx of othersFrom(pIndexById(last))){
       const p=G.players[idx]; if(!p.hand.some(c=>c.t==="stop"))continue;
-      const want=await decide(p.id,{kind:"stop",actorName:actor.name,actionType:t,targetId,stops},()=>aiWantStop(p,actor,t,targetId,stops));
+      const want=await decide(p.id,{kind:"stop",actorId:actor.id,actorName:actor.name,actionType:t,targetId,stops},()=>aiWantStop(p,actor,t,targetId,stops));
       if(want){ const sc=p.hand.find(c=>c.t==="stop");p.hand.splice(p.hand.indexOf(sc),1);G.discard.push(sc);stops++;sfx("stop");
         G.bigEvent={id:++G._bigId, t:"stop", name:p.name, avatar:p.avatar};
-        pushLog(`🛑 ${esc(p.name)} played STOP${stops>1?" (negating the previous Stop!)":` on ${esc(actor.name)}'s ${DEF[t].name}`}.`,true);broadcast();
+        pushLog(stops>1?`🛑 ${esc(p.name)} countered with a Stop!`:`🛑 ${esc(p.name)} used a Stop on ${esc(actor.name)}'s ${DEF[t].name}`,true);broadcast();
         last=p.id;played=true;break; }
     }
     if(!played)break;
@@ -1057,7 +1065,10 @@ function startGameCtl(){ if(ME.role==="host") doStart(false); else clientSend({k
 function returnToLobbyCtl(){ closeModal(); if(ME.role==="host"){ G.started=false; enterLobby(); broadcast(); } else clientSend({kind:"requestLobby"}); }
 
 // ---- juice / animation helpers ----
-const REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+const SYS_REDUCE = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+let ANIM = (localStorage.getItem("cactus_anim")!=="0");        // user animation preference
+let STOPMODE = localStorage.getItem("cactus_stopMode")||"ask"; // ask | auto | never
+let REDUCE = SYS_REDUCE || !ANIM;                              // effective reduced-motion
 function rectOf(el){ return el?el.getBoundingClientRect():null; }
 let pendingPlayOrigin=null;
 function flyToDiscard(type){
@@ -1172,7 +1183,8 @@ function renderGameFor(view){
   if(view.discardTop){ds.outerHTML=`<div id="discardSlot" class="discardwrap">${cardHTML({id:-1,t:view.discardTop})}</div>`;}
   else ds.outerHTML='<div id="discardSlot" class="discardslot">discard</div>';
   // log
-  const lg=$("log");lg.innerHTML=view.log.map(e=>`<div class="e${e.big?' big':''}">${e.html}</div>`).join("");lg.scrollTop=lg.scrollHeight;
+  const notable=view.log.filter(e=>e.big).slice(-6);
+  const lg=$("log");lg.innerHTML=(notable.length?notable:view.log.slice(-3)).map(e=>`<div class="e${e.big?' big':''}">${e.html}</div>`).join("")||'<div class="e" style="opacity:.5">No moves yet…</div>';lg.scrollTop=lg.scrollHeight;
   // you
   const you=view.players.find(p=>p.isYou);
   if(view.spectator||!you){ show("youbar"); $("youName").innerHTML=`👁 Spectating`; $("youPts").innerHTML=""; $("controls").innerHTML=""; $("hand").innerHTML='<div style="color:#789;padding:14px">You are watching this game.</div>'; }
@@ -1199,10 +1211,6 @@ function renderGameFor(view){
     view.players.forEach(p=>{ const was=prevSnap.points[p.id]||0; if(p.points>was){
       const tgt=p.isYou?$("youPts"):(oc.querySelector('.opp[data-id="'+p.id+'"] .pts')); chipFlyTo(tgt,p.points-was); sfx("point"); if(p.isYou)buzz(70); } });
     if(view.activeId!==prevSnap.activeId && you && view.activeId===you.id && view.phase==="playing"){ turnBanner("Your turn!"); buzz(40); }
-    // toast notable events (find last occurrence of previously-seen entry)
-    let si=-1; for(let k=view.log.length-1;k>=0;k--){ if(view.log[k].html===prevSnap.lastLog){si=k;break;} }
-    const fresh = si>=0? view.log.slice(si+1) : view.log.slice(-1);
-    fresh.filter(e=>e.big && e.html.indexOf("Game start")<0).forEach(e=>toast2(e.html));
   }
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
@@ -1294,13 +1302,28 @@ function validTargets(t,view){ const others=view.players.filter(p=>!p.isYou);
 
 // ---- prompts received from host (client side) or shown locally (host) ----
 function handlePrompt(reqId,prompt){ initAudio();
-  if(prompt.kind==="stop"){ humanWantStop(prompt).then(v=>dispatchResponse(reqId,v)); }
+  if(prompt.kind==="stop"){ humanStopDecision(prompt).then(v=>dispatchResponse(reqId,v)); }
   else if(prompt.kind==="pickHand"){ pickFromHand(prompt).then(v=>dispatchResponse(reqId,v)); }
 }
 function localPrompt(prompt){ // host's own seat
-  if(prompt.kind==="stop")return humanWantStop(prompt);
+  if(prompt.kind==="stop")return humanStopDecision(prompt);
   if(prompt.kind==="pickHand")return pickFromHand(prompt);
   return Promise.resolve(null);
+}
+// honor the player's Stop-card preference (Ask / Auto / Never)
+function humanStopDecision(prompt){
+  if(STOPMODE==="never") return Promise.resolve(false);
+  if(STOPMODE==="auto") return Promise.resolve(clientAutoStop(prompt));
+  return humanWantStop(prompt);
+}
+function clientAutoStop(prompt){
+  const v=lastView; if(!v)return false; const me=v.players.find(p=>p.isYou); if(!me)return false;
+  const actor=v.players.find(p=>p.id===prompt.actorId); const close=actor&&actor.points>=v.goal-1; const t=prompt.actionType;
+  if(prompt.stops%2===1){ return prompt.actorId===me.id && (t==="freepoint"||t==="stealpoint"); } // counter to push my own point through
+  if(t==="freepoint"&&close) return true;
+  if(t==="stealpoint"){ if(prompt.targetId===me.id) return true; if(close) return true; }
+  if((t==="stealcard"||t==="seesteal"||t==="request"||t==="swap") && prompt.targetId===me.id) return true;
+  return false;
 }
 
 // ---- modals ----
@@ -1348,8 +1371,33 @@ function fireReaction(name,emoji){const e=document.createElement("div");e.classN
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
 
 // ---- theme/sound/leave ----
-function toggleTheme(){const b=document.body;const night=b.getAttribute("data-theme")!=="night";b.setAttribute("data-theme",night?"night":"day");localStorage.setItem("cactus_theme",night?"night":"day");$("themeToggle").textContent=night?"☀️ Day mode":"🌙 Night mode";$("themeBtn2").textContent=night?"☀️":"🌙";$("soundBtn").textContent=SOUND?"🔊":"🔇";}
-function toggleSound(){SOUND=!SOUND;localStorage.setItem("cactus_sound",SOUND?"1":"0");$("soundBtn").textContent=SOUND?"🔊":"🔇";$("soundBtn").setAttribute("aria-label",SOUND?"Mute sound":"Unmute sound");if(SOUND){initAudio();sfx("draw");}}
+function toggleTheme(){const b=document.body;const night=b.getAttribute("data-theme")!=="night";b.setAttribute("data-theme",night?"night":"day");localStorage.setItem("cactus_theme",night?"night":"day");const tt=$("themeToggle");if(tt)tt.textContent=night?"☀️ Day mode":"🌙 Night mode";}
+function toggleSound(){SOUND=!SOUND;localStorage.setItem("cactus_sound",SOUND?"1":"0");if(SOUND){initAudio();sfx("draw");}}
+function setStopMode(m){ STOPMODE=m; localStorage.setItem("cactus_stopMode",m); }
+function setAnim(on){ ANIM=!!on; localStorage.setItem("cactus_anim",on?"1":"0"); REDUCE=SYS_REDUCE||!ANIM; }
+// ---- Settings menu ----
+function showSettings(){
+  const night=document.body.getAttribute("data-theme")==="night";
+  const seg=(opts,cur,fn)=>`<div class="segmented">${opts.map(o=>`<button class="${cur===o.v?'on':''}" data-v="${o.v}" onclick="${fn}('${o.v}')">${o.l}</button>`).join("")}</div>`;
+  modal(`<h2>⚙️ Settings</h2>
+    <div class="setrow"><span>🔊 Sound</span>${seg([{v:'on',l:'On'},{v:'off',l:'Off'}],SOUND?'on':'off','__snd')}</div>
+    <div class="setrow"><span>✨ Animations</span>${seg([{v:'on',l:'Full'},{v:'off',l:'Reduced'}],ANIM?'on':'off','__anim')}</div>
+    <div class="setrow"><span>🌗 Theme</span>${seg([{v:'day',l:'Day'},{v:'night',l:'Night'}],night?'night':'day','__thm')}</div>
+    <div class="setrow col"><span>🛑 My Stop cards</span>${seg([{v:'ask',l:'Ask me'},{v:'auto',l:'Auto'},{v:'never',l:'Never'}],STOPMODE,'__stop')}
+      <div class="setnote">Ask = prompt each time · Auto = play a Stop automatically when it helps · Never = keep them in hand</div></div>
+    <div class="opts"><button onclick="showRules()">📖 How to play</button><button style="background:#eee" onclick="closeModal()">Done</button></div>`);
+  window.__snd=v=>{ if((v==='on')!==SOUND)toggleSound(); refreshSeg(); };
+  window.__anim=v=>{ setAnim(v==='on'); refreshSeg(); };
+  window.__thm=v=>{ const isNight=document.body.getAttribute("data-theme")==="night"; if((v==='night')!==isNight)toggleTheme(); refreshSeg(); };
+  window.__stop=v=>{ setStopMode(v); refreshSeg(); };
+  function refreshSeg(){ showSettings(); }
+}
+// ---- Notifications history ----
+function showHistory(){
+  const log=(lastView&&lastView.log)||[];
+  const items=log.slice().reverse().map(e=>`<div class="histrow${e.big?' big':''}">${e.html}</div>`).join("")||"<i>No activity yet.</i>";
+  modal(`<h2>📜 Notifications</h2><div class="histbox">${items}</div><div class="opts"><button style="background:#eee" onclick="closeModal()">Close</button></div>`);
+}
 function goHome(){ _leaving=true; try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
   closeModal();chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
   hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
@@ -1386,7 +1434,8 @@ function boot(){
   $("createBtn").onclick=()=>{initAudio();if(!grabName())return;hostCreate();};
   $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c,$("spectateChk").checked);};
   $("soloBtn").onclick=startSolo;
-  $("themeToggle").onclick=toggleTheme; $("themeBtn2").onclick=toggleTheme; $("soundBtn").onclick=toggleSound; $("soundBtn").textContent=SOUND?"🔊":"🔇";
+  $("themeToggle").onclick=toggleTheme;
+  $("settingsBtn").onclick=()=>{initAudio();showSettings();}; $("historyBtn").onclick=showHistory;
   $("chatBtn").onclick=toggleChat; $("chatClose").onclick=toggleChat; $("chatSend").onclick=sendChat;
   $("chatText").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
   $("leaveBtn").onclick=()=>{ if(confirm("Leave the game?"))goHome(); };
