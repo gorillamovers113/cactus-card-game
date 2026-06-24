@@ -464,7 +464,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.0</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.1</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -834,7 +834,7 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 // ---------------- Game state (host) ----------------
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
   over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,bigEvent:null,_bigId:0,
-  fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,reqEvent:null,_reqEvId:0,takeEvent:null,_takeId:0,
+  fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,reqEvent:null,_reqEvId:0,takeEvent:null,_takeId:0,swapEvent:null,_swapId:0,
   rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic",bg:"green",stopRule:"5"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
 function scored(p){ if(G.comboBy===p.id) G.comboN++; else { G.comboBy=p.id; G.comboN=1; } return G.comboN; }
@@ -859,7 +859,7 @@ function doStart(isRematch){
   const n=G.players.length;
   G.goal = goalSel==="auto"?goalFor(n):parseInt(goalSel);
   for(let rr=0;rr<hand;rr++)for(const p of G.players)p.hand.push(G.draw.pop());
-  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.reqEvent=null; G.takeEvent=null; G.comboBy=null; G.comboN=0;
+  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.reqEvent=null; G.takeEvent=null; G.swapEvent=null; G.comboBy=null; G.comboN=0;
   // Auto Grand Champ: if 2+ players are tied at the top with 3+ session wins each
   const wc=G.players.map(p=>G.sessionWins[p.id]||0); const mx=Math.max(0,...wc);
   const tiedTop=G.players.filter(p=>(G.sessionWins[p.id]||0)===mx).length;
@@ -896,7 +896,7 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-50),
-    style:G.rules.style, bg:G.rules.bg, stopRule:G.rules.stopRule, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp, reqEvent:G.reqEvent, takeEvent:G.takeEvent,
+    style:G.rules.style, bg:G.rules.bg, stopRule:G.rules.stopRule, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp, reqEvent:G.reqEvent, takeEvent:G.takeEvent, swapEvent:G.swapEvent,
   };
 }
 function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
@@ -1022,7 +1022,8 @@ async function resolveAction(actor,t,opt){
       broadcast(); return false; }
     case "swap":{
       if(negated){pushLog(`${esc(actor.name)}'s Swap Hands was blocked 🛑`,true);broadcast();return false;}
-      const a=pById(opt.swapPair[0]),b=pById(opt.swapPair[1]); if(a&&b){const t2=a.hand;a.hand=b.hand;b.hand=t2;pushLog(`${esc(actor.name)} swapped hands: ${esc(a.name)} ↔ ${esc(b.name)} 🔄`,true);}
+      const a=pById(opt.swapPair[0]),b=pById(opt.swapPair[1]); if(a&&b){const t2=a.hand;a.hand=b.hand;b.hand=t2;pushLog(`${esc(actor.name)} swapped hands: ${esc(a.name)} ↔ ${esc(b.name)} 🔄`,true);
+        G.swapEvent={id:++G._swapId, aId:a.id, bId:b.id};}
       broadcast(); return false; }
   }
   return false;
@@ -1461,6 +1462,17 @@ function animateTake(ev){ // a FACE-DOWN card flies from the target into the ste
   fly.animate([{transform:"scale(1.35) rotate(0)",opacity:1},{transform:`translate(${dx*0.5}px,${dy*0.5-24}px) scale(1) rotate(${(Math.random()*30-15)|0}deg)`,opacity:1,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(.7)`,opacity:.85}],{duration:620,easing:"cubic-bezier(.3,.65,.3,1)",fill:"forwards"});
   sfx("steal"); buzz(40); setTimeout(()=>fly.remove(),660);
 }
+function animateSwap(ev){ // two hands swap — face-down cards cross between the two seats
+  if(REDUCE)return; const ar=seatRect(ev.aId), br=seatRect(ev.bId); if(!ar||!br)return;
+  const fly=(fr,tr,delay,lift)=>{ const c=document.createElement("div"); c.className="flydeck";
+    const sx=fr.left+fr.width/2-22, sy=fr.top+fr.height/2-31; c.style.left=sx+"px"; c.style.top=sy+"px"; document.body.appendChild(c);
+    const dx=(tr.left+tr.width/2-22)-sx, dy=(tr.top+tr.height/2-31)-sy;
+    c.animate([{transform:"scale(1)",opacity:1},{transform:`translate(${dx*0.5}px,${dy*0.5+lift}px) scale(1.06) rotate(${lift<0?-16:16}deg)`,opacity:1,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(.72) rotate(0)`,opacity:.85}],{duration:680,delay,easing:"cubic-bezier(.3,.65,.3,1)",fill:"forwards"});
+    setTimeout(()=>c.remove(),740+delay);
+  };
+  for(let i=0;i<3;i++){ fly(ar,br,i*60,-46); fly(br,ar,i*60+30,46); } // cross over/under
+  sfx("steal"); buzz([30,30,30]);
+}
 
 // ---- game render (view-driven) ----
 let prevPoints={}, prevSnap=null, winShown=false;
@@ -1511,6 +1523,7 @@ function renderGameFor(view){
     if(view.fanfare && view.fanfare.id!==prevSnap.fanId) setFanfare(view.fanfare); // 3-of-a-kind celebration
     if(view.reqEvent && view.reqEvent.id!==prevSnap.reqId) animateRequest(view.reqEvent); // request-a-card reveal
     if(view.takeEvent && view.takeEvent.id!==prevSnap.takeId) animateTake(view.takeEvent); // steal/see — card flies to stealer (face-down)
+    if(view.swapEvent && view.swapEvent.id!==prevSnap.swapId) animateSwap(view.swapEvent); // swap hands — cards cross between seats
     if(view.discardTop && view.discardTop!==prevSnap.discardTop){
       const la=view.lastAction; const laNew=la&&la.id!==prevSnap.lastActionId; const mine=la&&you&&la.actorId===you.id;
       const quiet=la&&(la.t==="request"||la.t==="stealcard"||la.t==="seesteal"); // these have their own animations
@@ -1528,7 +1541,7 @@ function renderGameFor(view){
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
-  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), fanId:(view.fanfare?view.fanfare.id:null), reqId:(view.reqEvent?view.reqEvent.id:null), takeId:(view.takeEvent?view.takeEvent.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), fanId:(view.fanfare?view.fanfare.id:null), reqId:(view.reqEvent?view.reqEvent.id:null), takeId:(view.takeEvent?view.takeEvent.id:null), swapId:(view.swapEvent?view.swapEvent.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
   view.players.forEach(p=>{prevSnap.points[p.id]=p.points; prevSnap.handCounts[p.id]=p.handCount;});
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
