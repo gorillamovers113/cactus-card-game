@@ -149,7 +149,8 @@
   .opp{background:linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.05));
     border:1px solid rgba(255,255,255,.22);border-radius:16px;padding:8px 10px 9px;min-width:124px;transition:.2s;position:relative;
     backdrop-filter:blur(3px);box-shadow:0 4px 10px rgba(0,0,0,.25);color:#f3fff5;}
-  .opp.turn{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold),0 0 16px rgba(244,180,0,.5);}
+  .opp.turn{border-color:var(--gold);background:linear-gradient(160deg, rgba(255,220,120,.30), rgba(255,200,80,.10));filter:brightness(1.06);animation:seatPulse 1.3s ease-in-out infinite;}
+  @keyframes seatPulse{0%,100%{box-shadow:0 0 0 2px var(--gold),0 0 12px rgba(244,180,0,.45);}50%{box-shadow:0 0 0 4px var(--gold),0 0 32px rgba(244,180,0,.95);}}
   .opp.off{opacity:.45;filter:grayscale(.6);}
   .opp .nm{font-family:'Fredoka',sans-serif;font-weight:600;font-size:13px;display:flex;align-items:center;gap:5px;justify-content:space-between;}
   .opp .nm .who{display:flex;align-items:center;gap:6px;overflow:hidden;white-space:nowrap;}
@@ -213,7 +214,9 @@
   /* hand dock */
   #youbar{position:fixed;bottom:0;left:0;right:0;z-index:6;padding:8px 8px calc(10px + env(safe-area-inset-bottom));
     background:linear-gradient(180deg, rgba(20,50,34,.0), rgba(15,40,27,.92) 28%);
-    border-top:1px solid rgba(255,255,255,.08);}
+    border-top:1px solid rgba(255,255,255,.08);transition:box-shadow .3s;}
+  #youbar.youturn{border-top:3px solid var(--gold);animation:youPulse 1.3s ease-in-out infinite;}
+  @keyframes youPulse{0%,100%{box-shadow:0 -3px 14px rgba(244,180,0,.4);}50%{box-shadow:0 -4px 34px rgba(244,180,0,.85);}}
   #youhead{display:flex;justify-content:space-between;align-items:center;max-width:1000px;margin:0 auto 6px;flex-wrap:wrap;gap:6px;}
   #youhead .me{font-family:'Fredoka',sans-serif;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;text-shadow:0 1px 3px rgba(0,0,0,.5);}
   #youhead .me .em{font-size:18px;width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);border:2px solid var(--gold);}
@@ -331,6 +334,25 @@
     font-family:'Luckiest Guy',cursive;font-size:clamp(90px,26vw,230px);line-height:1;color:#ffd34d;
     text-shadow:0 5px 0 #b85e00,0 0 50px rgba(244,180,0,.85);-webkit-text-stroke:4px rgba(0,0,0,.55);}
   #bigCountdown.on{display:block;}
+  /* request-a-card reveal */
+  #reqAnim{position:fixed;inset:0;z-index:59;display:none;align-items:center;justify-content:center;pointer-events:none;}
+  #reqAnim.on{display:flex;}
+  #reqAnim .reqbox{background:linear-gradient(180deg,rgba(20,55,36,.96),rgba(13,40,27,.96));border:2px solid var(--gold);border-radius:18px;padding:16px 22px;text-align:center;box-shadow:0 10px 36px rgba(0,0,0,.5);animation:pzin .3s ease;transition:box-shadow .25s,transform .25s;}
+  #reqAnim .reqbox.matched{box-shadow:0 0 0 4px var(--gold),0 0 60px rgba(244,180,0,.9);transform:scale(1.04);}
+  #reqAnim .reqhead{font-family:'Fredoka',sans-serif;font-weight:600;color:#fff;font-size:clamp(15px,4vw,20px);margin-bottom:12px;}
+  #reqAnim .reqhead b{color:var(--gold);}
+  #reqAnim .reqcards{display:flex;align-items:center;justify-content:center;gap:14px;}
+  #reqAnim .reqmatch{font-family:'Luckiest Guy',cursive;font-size:40px;color:var(--gold);}
+  #reqAnim .reqbox.fail .reqmatch{color:var(--red);}
+  #reqAnim .reqcard{width:92px;height:130px;perspective:700px;}
+  #reqAnim .reqcard .fi{position:relative;width:100%;height:100%;transform-style:preserve-3d;}
+  #reqAnim .reqcard .ff{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:11px;overflow:hidden;}
+  #reqAnim .reqcard .ff.back{background-color:var(--cardbackcolor,#2b3b2e);background-image:var(--cardback,repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px));border:1px solid rgba(0,0,0,.5);box-shadow:inset 0 0 0 2px rgba(255,255,255,.12);}
+  #reqAnim .reqcard .ff.front{transform:rotateY(180deg);}
+  #reqAnim .reqcard .ff.front .card{width:92px;height:130px;margin:0;animation:none;}
+  #reqAnim .matched .reqcard{animation:reqMatch .5s ease;}
+  @keyframes reqMatch{0%,100%{transform:scale(1);}50%{transform:scale(1.12);}}
+  #reqAnim .reqnone{width:92px;height:130px;border-radius:11px;border:2px dashed rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;color:#ff8a80;font-family:'Luckiest Guy',cursive;font-size:18px;}
   #bigCountdown.tick{animation:cdpop .55s cubic-bezier(.2,1.4,.4,1);}
   #bigCountdown.low{color:#ff5252;text-shadow:0 5px 0 #7a0000,0 0 50px rgba(255,82,82,.9);}
   @keyframes cdpop{0%{transform:scale(1.7);opacity:.35;}55%{transform:scale(.95);}100%{transform:scale(1);opacity:1;}}
@@ -410,7 +432,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.6</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.7</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -487,6 +509,7 @@
 
 <div id="connecting"><div class="spin"></div><div class="ctext" id="ctext">Connecting…</div><button class="btn grey sm ccancel" onclick="goHome()">Cancel</button></div>
 <div id="bigCountdown"></div>
+<div id="reqAnim"></div>
 <div id="slam"></div>
 <canvas id="confetti"></canvas>
 <div class="toaststack" id="toastStack"></div>
@@ -779,7 +802,7 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 // ---------------- Game state (host) ----------------
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
   over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,bigEvent:null,_bigId:0,
-  fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,
+  fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,reqEvent:null,_reqEvId:0,
   rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic",bg:"green",stopRule:"5"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
 function scored(p){ if(G.comboBy===p.id) G.comboN++; else { G.comboBy=p.id; G.comboN=1; } return G.comboN; }
@@ -804,7 +827,7 @@ function doStart(isRematch){
   const n=G.players.length;
   G.goal = goalSel==="auto"?goalFor(n):parseInt(goalSel);
   for(let rr=0;rr<hand;rr++)for(const p of G.players)p.hand.push(G.draw.pop());
-  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.comboBy=null; G.comboN=0;
+  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.reqEvent=null; G.comboBy=null; G.comboN=0;
   // Auto Grand Champ: if 2+ players are tied at the top with 3+ session wins each
   const wc=G.players.map(p=>G.sessionWins[p.id]||0); const mx=Math.max(0,...wc);
   const tiedTop=G.players.filter(p=>(G.sessionWins[p.id]||0)===mx).length;
@@ -841,7 +864,7 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-50),
-    style:G.rules.style, bg:G.rules.bg, stopRule:G.rules.stopRule, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp,
+    style:G.rules.style, bg:G.rules.bg, stopRule:G.rules.stopRule, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp, reqEvent:G.reqEvent,
   };
 }
 function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
@@ -961,6 +984,7 @@ async function resolveAction(actor,t,opt){
       const tgt=pById(opt.target),rt=opt.requestType; const have=tgt&&tgt.hand.find(c=>c.t===rt);
       if(have){moveCard(tgt,actor,have);sfx("steal");pushLog(`${esc(tgt.name)} gave ${esc(actor.name)} a ${DEF[rt].name} 🙏`,true);}
       else pushLog(`${esc(actor.name)} asked ${tgt?esc(tgt.name):"someone"} for a ${DEF[rt].name} — none`,true);
+      G.reqEvent={id:++G._reqEvId, type:rt, fromId:tgt?tgt.id:null, fromName:tgt?tgt.name:"", toId:actor.id, toName:actor.name, success:!!have};
       broadcast(); return false; }
     case "swap":{
       if(negated){pushLog(`${esc(actor.name)}'s Swap Hands was blocked 🛑`,true);broadcast();return false;}
@@ -1343,6 +1367,41 @@ function grandChampBanner(){
     `<div class="slamcontent"><div class="slam-big" style="color:#ffd34d;font-size:clamp(34px,10vw,80px)">🏆 GRAND<br>CHAMPIONSHIP! 🏆</div><div class="slam-who" style="margin-top:8px">Series tied — winner takes all!</div></div>`;
   clearTimeout(slamTimer); slamTimer=setTimeout(()=>s.className="",3200);
 }
+let reqTimer=null;
+function animateRequest(ev){
+  const reqName=ev.toName||"", giveName=ev.fromName||"";
+  if(REDUCE){ toast2(`🙏 ${esc(reqName)} asked ${esc(giveName)} for a ${DEF[ev.type].name} — ${ev.success?'got it!':'none'}`); sfx(ev.success?"steal":"stop"); return; }
+  const r=$("reqAnim"); if(!r)return;
+  const reqCard=cardHTML({id:-70,t:ev.type});
+  const give = ev.success ? `<div class="fi"><div class="ff back"></div><div class="ff front">${reqCard}</div></div>` : `<div class="reqnone">NONE!</div>`;
+  r.innerHTML=`<div class="reqbox${ev.success?"":" fail"}">
+      <div class="reqhead">🙏 <b>${esc(reqName)}</b> asks <b>${esc(giveName)}</b> for…</div>
+      <div class="reqcards">
+        <div class="reqcard"><div class="fi" id="reqAsk"><div class="ff back"></div><div class="ff front">${reqCard}</div></div></div>
+        <div class="reqmatch">${ev.success?"=":"✗"}</div>
+        <div class="reqcard">${give}</div>
+      </div></div>`;
+  r.classList.add("on"); sfx("flip");
+  // flip cards face-up
+  setTimeout(()=>{ r.querySelectorAll("#reqAnim .fi").forEach(fi=>fi.animate([{transform:"rotateY(0)"},{transform:"rotateY(180deg)"}],{duration:450,fill:"forwards",easing:"ease-out"})); }, 250);
+  if(ev.success){
+    setTimeout(()=>{ const b=r.querySelector(".reqbox"); if(b)b.classList.add("matched"); sfx("point"); buzz(40); }, 820); // match glow/pulse
+    clearTimeout(reqTimer); reqTimer=setTimeout(()=>{ flyReqToSeat(ev); r.classList.remove("on"); r.innerHTML=""; }, 1550);
+  } else {
+    setTimeout(()=>{ shakeScreen(1); sfx("stop"); }, 700);
+    clearTimeout(reqTimer); reqTimer=setTimeout(()=>{ r.classList.remove("on"); r.innerHTML=""; }, 1700);
+  }
+}
+function flyReqToSeat(ev){ // the given card flies into the requester's seat/hand
+  if(REDUCE)return; const you=lastView&&lastView.players.find(p=>p.isYou);
+  const toEl = (you&&ev.toId===you.id)?$("youbar"):document.querySelector('.opp[data-id="'+ev.toId+'"]');
+  const tr=rectOf(toEl); if(!tr)return;
+  const fly=document.createElement("div"); fly.className="flycard"; fly.innerHTML=`<div class="fi" style="transform:rotateY(180deg)"><div class="ff back"></div><div class="ff front">${cardHTML({id:-71,t:ev.type})}</div></div>`;
+  const sx=window.innerWidth/2-35, sy=window.innerHeight*0.45-49; fly.style.left=sx+"px"; fly.style.top=sy+"px"; document.body.appendChild(fly);
+  const dx=(tr.left+tr.width/2-35)-sx, dy=(tr.top+tr.height/2-49)-sy;
+  fly.animate([{transform:"translate(0,0) scale(1.2)",opacity:1},{transform:`translate(${dx}px,${dy}px) scale(.5)`,opacity:.6}],{duration:480,easing:"cubic-bezier(.3,.7,.35,1)",fill:"forwards"});
+  sfx("steal"); setTimeout(()=>fly.remove(),520);
+}
 
 // ---- game render (view-driven) ----
 let prevPoints={}, prevSnap=null, winShown=false;
@@ -1375,6 +1434,7 @@ function renderGameFor(view){
   const lg=$("log");lg.innerHTML=(notable.length?notable:view.log.slice(-3)).map(e=>`<div class="e${e.big?' big':''}">${e.html}</div>`).join("")||'<div class="e" style="opacity:.5">No moves yet…</div>';lg.scrollTop=lg.scrollHeight;
   // you
   const you=view.players.find(p=>p.isYou);
+  $("youbar").classList.toggle("youturn", !!(you&&you.isActive&&view.phase==="playing"));
   if(view.spectator||!you){ show("youbar"); $("youName").innerHTML=`👁 Spectating`; $("youPts").innerHTML=""; $("controls").innerHTML=""; $("hand").innerHTML='<div style="color:#789;padding:14px">You are watching this game.</div>'; }
   else{ show("youbar");
     $("youName").innerHTML=`${crown(you)}<span class="em">${you.avatar}</span> ${esc(you.name)} ${you.isActive?'<span style="color:var(--gold)">— your turn!</span>':''}`;
@@ -1389,10 +1449,12 @@ function renderGameFor(view){
     const bigNew = view.bigEvent && view.bigEvent.id!==prevSnap.bigId;
     if(bigNew) showSlam(view.bigEvent);
     if(view.fanfare && view.fanfare.id!==prevSnap.fanId) setFanfare(view.fanfare); // 3-of-a-kind celebration
+    if(view.reqEvent && view.reqEvent.id!==prevSnap.reqId) animateRequest(view.reqEvent); // request-a-card reveal
     if(view.discardTop && view.discardTop!==prevSnap.discardTop){
       const la=view.lastAction; const laNew=la&&la.id!==prevSnap.lastActionId; const mine=la&&you&&la.actorId===you.id;
+      const isReq=la&&la.t==="request";
       if(bigNew){ /* slam shows the card big; skip extra card-to-discard motion */ }
-      else if(laNew&&!mine) showPlayedCard(la); else flyToDiscard(view.discardTop);
+      else if(laNew&&!mine&&!isReq) showPlayedCard(la); else flyToDiscard(view.discardTop);
     }
     // cards drawn from the deck -> slide from the draw pile to that player
     const drawDrop = (prevSnap.drawCount||0) - view.drawCount;
@@ -1405,7 +1467,7 @@ function renderGameFor(view){
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
-  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), fanId:(view.fanfare?view.fanfare.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), fanId:(view.fanfare?view.fanfare.id:null), reqId:(view.reqEvent?view.reqEvent.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
   view.players.forEach(p=>{prevSnap.points[p.id]=p.points; prevSnap.handCounts[p.id]=p.handCount;});
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
@@ -1671,7 +1733,7 @@ function dzSetColor(c){ if(c) setDeck(dzEditing,"color",c); else clearDeck(dzEdi
 function dzResetCard(){ delete DECK[dzEditing]; saveDeck(); openCardEditor(dzEditing); }
 function dzUpload(){ pendingArtSlot="__dz"; $("artFile").click(); }
 function goHome(){ _leaving=true; try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
-  closeModal();hidePrompt();stopCountdown=null;$("bigCountdown").className="";chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
+  closeModal();hidePrompt();stopCountdown=null;$("bigCountdown").className="";$("reqAnim").className="";chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
   hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
   document.body.classList.add("home"); winShown=false; prevSnap=null; }
 
