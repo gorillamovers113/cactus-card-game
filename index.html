@@ -382,6 +382,18 @@
   @keyframes slamShake{0%,100%{transform:translateX(0);}15%{transform:translateX(-14px);}30%{transform:translateX(14px);}45%{transform:translateX(-9px);}60%{transform:translateX(9px);}75%{transform:translateX(-4px);}}
   #slam.level2 .slam-big{font-size:clamp(54px,16vw,124px);}
   #slam.level3 .slam-big{font-size:clamp(60px,18vw,140px);-webkit-text-stroke:3px rgba(0,0,0,.6);}
+  #slam .slam-target{margin-top:16px;font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(16px,4.6vw,26px);color:#fff;
+    background:rgba(0,0,0,.5);border:2px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 16px;display:inline-block;
+    text-shadow:0 2px 6px rgba(0,0,0,.8);animation:slamIn .42s .18s both;}
+  #slam .slam-target b{color:#ffd34d;}
+  /* targeted seat highlight */
+  .opp.targeted, #youbar.targeted{animation:targetPulse 1.1s ease-in-out 2; position:relative; z-index:5;}
+  @keyframes targetPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,82,82,.0);}
+    50%{box-shadow:0 0 0 5px rgba(255,82,82,.95),0 0 26px 8px rgba(255,82,82,.7);}}
+  .targetmark{position:fixed;z-index:61;font-size:34px;pointer-events:none;filter:drop-shadow(0 3px 6px rgba(0,0,0,.7));
+    animation:targetMark 2s ease-out forwards;}
+  @keyframes targetMark{0%{transform:translateY(8px) scale(0);opacity:0;}18%{transform:translateY(-4px) scale(1.3);opacity:1;}
+    35%{transform:translateY(0) scale(1);}80%{transform:translateY(-2px) scale(1);opacity:1;}100%{transform:translateY(-10px) scale(.9);opacity:0;}}
   .combo-line{font-family:'Luckiest Guy',cursive;font-size:clamp(26px,8vw,52px);color:#ff5252;text-shadow:0 3px 0 #7a0000,0 0 24px #ff5252;margin-top:6px;animation:comboPop .4s cubic-bezier(.2,1.8,.4,1) both;}
   @keyframes comboPop{0%{transform:scale(0) rotate(-12deg);}70%{transform:scale(1.3);}100%{transform:scale(1);}}
   /* earthquake screen shake */
@@ -470,7 +482,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.9</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.10</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -1033,9 +1045,13 @@ async function applyAction(p,action){
   if(action.kind==="playCard"){
     const card=p.hand.find(c=>c.id===action.cardId); if(!card||isChar(card.t))return false;
     p.hand.splice(p.hand.indexOf(card),1); G.discard.push(card); sfx("play");
-    const tname=action.target!=null?((pById(action.target)||{}).name||""):"";
+    const tp=action.target!=null?pById(action.target):null; const tname=tp?(tp.name||""):"";
+    const sp=action.swapPair||null; const sa=sp?pById(sp[0]):null, sb=sp?pById(sp[1]):null;
     G.lastAction={id:++G._actId, actorId:p.id, name:p.name, avatar:p.avatar, t:card.t, kind:"card", label:DEF[card.t].name, target:tname, requestType:action.requestType||null};
-    if(DRAMATIC.includes(card.t)) G.bigEvent={id:++G._bigId, t:card.t, name:p.name, avatar:p.avatar};
+    // every played card gets a big reveal so the whole table can see it (+ who it targets)
+    G.bigEvent={id:++G._bigId, t:card.t, name:p.name, avatar:p.avatar,
+      targetId:tp?tp.id:null, targetName:tname, targetAvatar:tp?tp.avatar:"", requestType:action.requestType||null,
+      swapAId:sa?sa.id:null, swapBId:sb?sb.id:null, swapA:sa?sa.name:"", swapB:sb?sb.name:""};
     broadcast();
     return await resolveAction(p,card.t,action);
   }
@@ -1428,18 +1444,35 @@ function flyFromDeck(targetEl,count){
   sfx("draw");
 }
 let slamTimer=null;
+function seatElOf(id){ const you=lastView&&lastView.players.find(p=>p.isYou); return (you&&id===you.id)?$("youbar"):document.querySelector('.opp[data-id="'+id+'"]'); }
+function highlightTarget(id){ if(!id||REDUCE)return; const el=seatElOf(id); if(!el)return;
+  el.classList.remove("targeted"); void el.offsetWidth; el.classList.add("targeted");
+  const r=rectOf(el); if(r){ const m=document.createElement("div"); m.className="targetmark"; m.textContent="🎯";
+    m.style.left=(r.left+r.width/2-17)+"px"; m.style.top=(r.top-34)+"px"; document.body.appendChild(m); setTimeout(()=>m.remove(),2050); }
+  setTimeout(()=>el.classList.remove("targeted"),2400); }
+function slamTargetLine(ev){
+  if(ev.swapAId&&ev.swapBId) return `<div class="slam-target">🔄 <b>${esc(ev.swapA||"")}</b> ↔ <b>${esc(ev.swapB||"")}</b></div>`;
+  if(!ev.targetName) return "";
+  const verb = ev.t==="request"?"asks":(ev.t==="seesteal"?"peeks at":(ev.t==="stealcard"?"takes from":(ev.t==="stealpoint"?"steals from":"on")));
+  const ask = ev.requestType?` for a <b>${esc(DEF[ev.requestType].name)}</b>`:"";
+  return `<div class="slam-target">🎯 ${verb} ${ev.targetAvatar||""} <b>${esc(ev.targetName)}</b>${ask}</div>`;
+}
 function showSlam(ev){
   if(!ev)return; const d=DEF[ev.t];
   const label = ev.t==="stop" ? "STOP!" : (d.name.toUpperCase()+"!");
-  if(REDUCE){ toast2(`${ev.avatar} ${esc(ev.name)} played ${esc(d.name)}!`); }
+  if(REDUCE){ toast2(`${ev.avatar} ${esc(ev.name)} played ${esc(d.name)}${ev.targetName?" on "+esc(ev.targetName):(ev.swapA?` (${esc(ev.swapA)} ↔ ${esc(ev.swapB)})`:"")}!`); }
   else {
     const s=$("slam");
     s.innerHTML=`<div class="flash" style="background:radial-gradient(circle at 50% 45%, ${d.color}, transparent 65%)"></div>`+
       `<div class="slamcontent"><div class="slam-who">${ev.avatar} <b>${esc(ev.name)}</b> plays</div>`+
-      `<div class="slam-big" style="color:${d.color}">${label}</div>${cardHTML({id:-4,t:ev.t})}</div>`;
-    s.classList.add("on");
-    clearTimeout(slamTimer); slamTimer=setTimeout(()=>s.classList.remove("on"),1700);
+      `<div class="slam-big" style="color:${d.color}">${label}</div>${cardHTML({id:-4,t:ev.t})}${slamTargetLine(ev)}</div>`;
+    s.className="on";
+    clearTimeout(slamTimer); slamTimer=setTimeout(()=>s.classList.remove("on"),1900);
   }
+  // pulse + mark the targeted seat(s)
+  if(ev.targetId) highlightTarget(ev.targetId);
+  if(ev.swapAId) highlightTarget(ev.swapAId);
+  if(ev.swapBId) highlightTarget(ev.swapBId);
   sfx(ev.t==="stop"?"stop":ev.t==="stealpoint"?"steal":ev.t==="freepoint"?"point":"play");
   buzz([50,40,90]);
 }
@@ -1599,9 +1632,11 @@ function renderGameFor(view){
     const bigNew = view.bigEvent && view.bigEvent.id!==prevSnap.bigId;
     if(bigNew) showSlam(view.bigEvent);
     if(view.fanfare && view.fanfare.id!==prevSnap.fanId) setFanfare(view.fanfare); // 3-of-a-kind celebration
-    if(view.reqEvent && view.reqEvent.id!==prevSnap.reqId) animateRequest(view.reqEvent); // request-a-card reveal
-    if(view.takeEvent && view.takeEvent.id!==prevSnap.takeId) animateTake(view.takeEvent); // steal/see — card flies to stealer (face-down)
-    if(view.swapEvent && view.swapEvent.id!==prevSnap.swapId) animateSwap(view.swapEvent); // swap hands — cards cross between seats
+    // let the big reveal play first, then run the steal/swap motion so it's clear who's affected
+    const afterSlam = bigNew ? 1250 : 0;
+    if(view.reqEvent && view.reqEvent.id!==prevSnap.reqId){ const e=view.reqEvent; setTimeout(()=>animateRequest(e),afterSlam); } // request-a-card reveal
+    if(view.takeEvent && view.takeEvent.id!==prevSnap.takeId){ const e=view.takeEvent; setTimeout(()=>animateTake(e),afterSlam); } // steal/see — card flies to stealer (face-down)
+    if(view.swapEvent && view.swapEvent.id!==prevSnap.swapId){ const e=view.swapEvent; setTimeout(()=>animateSwap(e),afterSlam); } // swap hands — cards cross between seats
     if(view.discardTop && view.discardTop!==prevSnap.discardTop){
       const la=view.lastAction; const laNew=la&&la.id!==prevSnap.lastActionId; const mine=la&&you&&la.actorId===you.id;
       const quiet=la&&(la.t==="request"||la.t==="stealcard"||la.t==="seesteal"); // these have their own animations
