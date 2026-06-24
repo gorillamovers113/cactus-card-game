@@ -194,8 +194,10 @@
   #log .e.show{animation:logpop .35s cubic-bezier(.2,1.4,.4,1);}
   @keyframes logpop{0%{transform:scale(.85);opacity:0;}100%{transform:scale(1);opacity:1;}}
   /* inline prompt zone (under the piles) */
-  #promptZone{background:linear-gradient(180deg,rgba(20,55,36,.96),rgba(13,40,27,.96));border:2px solid var(--gold);border-radius:16px;
-    padding:14px 16px;margin:0 auto 8px;box-shadow:0 8px 26px rgba(0,0,0,.45);text-align:center;animation:pzin .25s ease;}
+  #promptZone{position:fixed;left:50%;bottom:170px;transform:translateX(-50%);width:min(680px,94vw);z-index:47;max-height:58vh;overflow-y:auto;
+    background:linear-gradient(180deg,rgba(20,55,36,.97),rgba(13,40,27,.97));border:2px solid var(--gold);border-radius:16px;
+    padding:14px 16px;box-shadow:0 10px 34px rgba(0,0,0,.55);text-align:center;animation:pzin2 .25s ease;}
+  @keyframes pzin2{from{opacity:0;transform:translateX(-50%) translateY(12px) scale(.97);}to{opacity:1;transform:translateX(-50%);}}
   @keyframes pzin{from{opacity:0;transform:translateY(-8px) scale(.97);}to{opacity:1;transform:none;}}
   #promptZone .pq{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(16px,4.5vw,22px);color:#fff;margin-bottom:12px;line-height:1.25;}
   #promptZone .pq b{color:var(--gold);}
@@ -467,7 +469,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.2</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.3</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -1747,7 +1749,10 @@ function closeModal(){overlay.classList.remove("on");}
 function info(title,msg){return new Promise(res=>{modal(`<h2>${title}</h2><p>${msg}</p><div class="opts"><button onclick="__r()">OK</button></div>`);window.__r=()=>{closeModal();res();};});}
 // ---- inline prompts (rendered under the draw/discard/points piles) ----
 let promptActive=false;
-function showPrompt(html){ const pz=$("promptZone"); if(!pz)return; pz.innerHTML=html; pz.classList.remove("hidden"); const lg=$("log"); if(lg)lg.classList.add("dim"); promptActive=true; pz.scrollIntoView&&pz.scrollIntoView({block:"nearest",behavior:"smooth"}); }
+function showPrompt(html){ const pz=$("promptZone"); if(!pz)return; pz.innerHTML=html; pz.classList.remove("hidden");
+  const dock=$("youbar"); const dh=(dock&&!dock.classList.contains("hidden"))?dock.getBoundingClientRect().height:150;
+  pz.style.bottom=(Math.round(dh)+10)+"px"; // float just above the hand so the buttons are always reachable
+  const lg=$("log"); if(lg)lg.classList.add("dim"); promptActive=true; }
 function hidePrompt(){ const pz=$("promptZone"); if(pz){pz.classList.add("hidden");pz.innerHTML="";} const lg=$("log"); if(lg)lg.classList.remove("dim"); promptActive=false; }
 function chooseTarget(t,validIds,view){return new Promise(res=>{const btns=validIds.map(id=>{const p=view.players.find(x=>x.id===id);return `<button class="pbtn choice" onclick="__pick('${id}')">${p.avatar} ${esc(p.name)} · ${p.points}pt</button>`;}).join("");
   showPrompt(`<div class="pq">${DEF[t].art} ${DEF[t].name} — choose a player</div><div class="pbtns">${btns}<button class="pbtn choice grey" onclick="__pick(null)">Cancel</button></div>`);window.__pick=id=>{hidePrompt();res(id);};});}
