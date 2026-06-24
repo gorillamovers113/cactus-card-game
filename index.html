@@ -206,6 +206,10 @@
   .pbtn.grey{background:linear-gradient(180deg,#90a4ae,#6b7d87);box-shadow:0 4px 0 #4d5b63,0 6px 12px rgba(0,0,0,.3);}
   .pbtns.cards{gap:8px;}
   .pbtns .pickback{width:58px;height:82px;}
+  .reqgrid{flex-wrap:wrap;max-height:46vh;overflow-y:auto;padding:4px;}
+  .reqpick{width:74px;height:104px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s;}
+  .reqpick:hover{transform:translateY(-4px) scale(1.05);}
+  .reqpick .card{transform:scale(.62);margin:0;cursor:pointer;animation:none;box-shadow:0 3px 7px rgba(0,0,0,.35);}
   /* hand dock */
   #youbar{position:fixed;bottom:0;left:0;right:0;z-index:6;padding:8px 8px calc(10px + env(safe-area-inset-bottom));
     background:linear-gradient(180deg, rgba(20,50,34,.0), rgba(15,40,27,.92) 28%);
@@ -399,7 +403,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.3</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.4</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -555,37 +559,63 @@ function deckCharImages(){ const o={}; for(const t of ["charlie","spike","walter
 function applyCardStyle(id){ const s=STYLES[id]||STYLES.classic; const r=document.documentElement.style;
   r.setProperty('--cardpaper',s.paper); r.setProperty('--cardink',s.ink); r.setProperty('--cardborder',s.border);
   r.setProperty('--cardback',s.back); r.setProperty('--cardbackcolor',s.backColor); ART=s.art; CURSTYLE=id; }
+const BG_THEMES={
+  green:{name:"Green Felt",sw:"🟢",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #3a9b63 0%, #2b7d4e 42%, #1c5e39 74%, #134228 100%)"},
+  blue:{name:"Ocean",sw:"🔵",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #2f7db0 0%, #1f5e8a 45%, #14425e 78%, #0c2c40 100%)"},
+  crimson:{name:"Crimson",sw:"🔴",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #a83b3b 0%, #863030 45%, #5e2020 78%, #3a1414 100%)"},
+  purple:{name:"Royal",sw:"🟣",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #6d4ca8 0%, #543a86 45%, #3a285e 78%, #241640 100%)"},
+  sand:{name:"Desert",sw:"🟡",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #c79a52 0%, #a87d35 45%, #7d5d22 78%, #573f14 100%)"},
+  midnight:{name:"Midnight",sw:"⚫",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #2a3550 0%, #1c2540 45%, #131a2e 78%, #0a0e1a 100%)"},
+};
+function applyTableBg(key){ const g=$("game"); if(!g)return; const b=BG_THEMES[key]||BG_THEMES.green; g.style.background=b.grad; }
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function rand(a){return a[Math.floor(Math.random()*a.length)];}
 function code4(){let s="";const ch="ABCDEFGHJKMNPQRSTUVWXYZ23456789";for(let i=0;i<4;i++)s+=ch[Math.floor(Math.random()*ch.length)];return s;}
 
-// ---------------- Sound ----------------
-let AC=null, SOUND=(localStorage.getItem("cactus_sound")!=="0");
-function initAudio(){ if(!AC){ try{AC=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} } if(AC&&AC.state==="suspended")AC.resume(); }
-function tone(f,d,type="sine",g=0.08,when=0){ if(!SOUND||!AC)return; const o=AC.createOscillator(),v=AC.createGain();o.type=type;o.frequency.value=f;
-  o.connect(v);v.connect(AC.destination);const t=AC.currentTime+when;v.gain.setValueAtTime(0,t);v.gain.linearRampToValueAtTime(g,t+0.01);
-  v.gain.exponentialRampToValueAtTime(0.0001,t+d);o.start(t);o.stop(t+d+0.02);}
-function noiseBurst(d=0.18,g=0.05,hp=1200){ if(!SOUND||!AC)return; const n=Math.floor(AC.sampleRate*d);
-  const buf=AC.createBuffer(1,n,AC.sampleRate); const ch=buf.getChannelData(0); for(let i=0;i<n;i++)ch[i]=(Math.random()*2-1)*(1-i/n);
+// ---------------- Sound (richer synthesis + light reverb + speech) ----------------
+let AC=null, SOUND=(localStorage.getItem("cactus_sound")!=="0"); let MASTER=null, REVERB=null;
+function initAudio(){ if(!AC){ try{
+    AC=new (window.AudioContext||window.webkitAudioContext)();
+    MASTER=AC.createGain(); MASTER.gain.value=0.85; MASTER.connect(AC.destination);
+    // small ambience: feedback delay reverb
+    REVERB=AC.createGain(); REVERB.gain.value=0.16; const dl=AC.createDelay(); dl.delayTime.value=0.085; const fb=AC.createGain(); fb.gain.value=0.28;
+    const lp=AC.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2600;
+    REVERB.connect(dl); dl.connect(lp); lp.connect(fb); fb.connect(dl); dl.connect(MASTER);
+  }catch(e){} } if(AC&&AC.state==="suspended")AC.resume(); }
+function tone(f,d,type="sine",g=0.08,when=0,f2,rev=0.5){ if(!SOUND||!AC)return; const o=AC.createOscillator(),v=AC.createGain();
+  o.type=type; const t=AC.currentTime+when; o.frequency.setValueAtTime(f,t); if(f2)o.frequency.exponentialRampToValueAtTime(Math.max(1,f2),t+d);
+  o.connect(v); v.connect(MASTER||AC.destination); if(REVERB&&rev){const s=AC.createGain();s.gain.value=rev;v.connect(s);s.connect(REVERB);}
+  v.gain.setValueAtTime(0,t); v.gain.linearRampToValueAtTime(g,t+0.008); v.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  o.start(t); o.stop(t+d+0.05); }
+function chord(freqs,d,type,g,when){ freqs.forEach(f=>tone(f,d,type,g,when||0)); }
+function noiseBurst(d=0.18,g=0.05,hp=1200,when=0){ if(!SOUND||!AC)return; const n=Math.floor(AC.sampleRate*d);
+  const buf=AC.createBuffer(1,n,AC.sampleRate); const ch=buf.getChannelData(0); for(let i=0;i<n;i++)ch[i]=(Math.random()*2-1)*Math.pow(1-i/n,1.5);
   const src=AC.createBufferSource(); src.buffer=buf; const f=AC.createBiquadFilter(); f.type="highpass"; f.frequency.value=hp;
-  const v=AC.createGain(); v.gain.value=g; src.connect(f); f.connect(v); v.connect(AC.destination); src.start(); }
+  const v=AC.createGain(); v.gain.value=g; src.connect(f); f.connect(v); v.connect(MASTER||AC.destination); src.start(AC.currentTime+when); }
 const SFX={
-  play:()=>{tone(440,0.06,"triangle",0.05);noiseBurst(0.12,0.04,2000);},
-  flip:()=>{noiseBurst(0.09,0.05,2500);tone(520,0.05,"triangle",0.04,0.03);},
-  point:()=>{[523,659,784].forEach((f,i)=>tone(f,0.14,"sine",0.09,i*0.07));},
-  chip:()=>{tone(880,0.08,"sine",0.06);tone(1320,0.1,"sine",0.05,0.05);},
-  steal:()=>{tone(500,0.12,"sawtooth",0.06);tone(280,0.16,"sawtooth",0.06,0.09);noiseBurst(0.1,0.03,1500);},
-  stop:()=>{tone(180,0.28,"square",0.08);tone(120,0.3,"square",0.06,0.02);},
-  draw:()=>{noiseBurst(0.08,0.04,2200);tone(400,0.05,"triangle",0.04);},
-  shuffle:()=>{noiseBurst(0.22,0.05,1800);},
-  win:()=>{[523,659,784,1047,1319].forEach((f,i)=>tone(f,0.3,"sine",0.1,i*0.13));[392,523,659].forEach((f,i)=>tone(f,0.4,"triangle",0.05,0.66+i*0.04));},
-  chat:()=>{tone(680,0.08,"sine",0.05);},
-  join:()=>{tone(587,0.1,"sine",0.06);tone(880,0.12,"sine",0.06,0.08);},
-  click:()=>{tone(300,0.04,"square",0.03);},
+  play:()=>{tone(330,0.14,"sine",0.06,0,520);noiseBurst(0.1,0.025,2600);},
+  flip:()=>{noiseBurst(0.07,0.05,3200);tone(660,0.06,"triangle",0.04,0.02,440);},
+  point:()=>{chord([523.25,659.25,783.99],0.5,"sine",0.06,0);tone(1046.5,0.5,"triangle",0.04,0.08);}, // C major chime
+  chip:()=>{tone(1568,0.06,"sine",0.05,0,2000);tone(2093,0.09,"sine",0.04,0.04);},
+  steal:()=>{tone(740,0.28,"sine",0.07,0,180);noiseBurst(0.12,0.03,1200,0.02);},
+  stop:()=>{tone(220,0.32,"square",0.09,0,70);noiseBurst(0.14,0.06,400);tone(110,0.34,"sine",0.06,0.01);},
+  draw:()=>{noiseBurst(0.09,0.045,2400);tone(380,0.07,"sine",0.04,0,300);},
+  shuffle:()=>{noiseBurst(0.26,0.05,1600);noiseBurst(0.2,0.04,2400,0.06);},
+  win:()=>{[[523.25,0],[659.25,.12],[783.99,.24],[1046.5,.36]].forEach(([f,w])=>{tone(f,0.55,"triangle",0.09,w);tone(f*2,0.4,"sine",0.03,w);}); chord([523.25,659.25,1046.5],0.9,"sine",0.05,0.5);},
+  fanfare:()=>{[[392,0],[523.25,.1],[659.25,.2],[783.99,.3],[1046.5,.42]].forEach(([f,w])=>{tone(f,0.6,"sawtooth",0.06,w,null,0.7);tone(f,0.6,"triangle",0.05,w);}); chord([523.25,659.25,783.99,1046.5],1.1,"sine",0.06,0.55);},
+  chat:()=>{tone(740,0.08,"sine",0.05,0,880);},
+  join:()=>{tone(523.25,0.12,"sine",0.06,0);tone(783.99,0.16,"sine",0.06,0.09);},
+  click:()=>{tone(420,0.04,"sine",0.03,0,560);},
+  tick:()=>{tone(1200,0.04,"square",0.04);},
 };
 function sfx(n){ if(SFX[n])SFX[n](); }
 function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+let VOICES=[];
+function loadVoices(){ try{ VOICES=window.speechSynthesis?window.speechSynthesis.getVoices():[]; }catch(e){} }
+function speak(text){ if(!SOUND)return; try{ if(!('speechSynthesis' in window))return; const u=new SpeechSynthesisUtterance(text);
+  u.rate=1.0; u.pitch=1.05; u.volume=1; const v=VOICES.find(v=>/en[-_]?(US|GB)/i.test(v.lang)&&/(female|samantha|google|zira|karen)/i.test(v.name))||VOICES.find(v=>/^en/i.test(v.lang)); if(v)u.voice=v;
+  window.speechSynthesis.cancel(); window.speechSynthesis.speak(u); }catch(e){} }
 
 // ---------------- Identity / persisted ----------------
 function getClientId(){ let c=localStorage.getItem("cactus_clientId"); if(!c){ c="c"+Math.random().toString(36).slice(2)+Date.now().toString(36); localStorage.setItem("cactus_clientId",c); } return c; }
@@ -742,7 +772,7 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
   over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,bigEvent:null,_bigId:0,
   fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,
-  rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic"},
+  rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic",bg:"green",stopRule:"5"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
 function scored(p){ if(G.comboBy===p.id) G.comboN++; else { G.comboBy=p.id; G.comboN=1; } return G.comboN; }
 function controllerIds(){ return G?[G.hostId,G.lastWinnerId].filter(Boolean):["p0"]; }
@@ -803,7 +833,7 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-50),
-    style:G.rules.style, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp,
+    style:G.rules.style, bg:G.rules.bg, stopRule:G.rules.stopRule, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp,
   };
 }
 function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
@@ -1124,10 +1154,18 @@ function buildSettingsPanel(rules, amCtl, view){
         <option value="3" ${String(rules.wild||3)==="3"?"selected":""}>3 pts (official)</option>
         <option value="2" ${String(rules.wild)==="2"?"selected":""}>2 pts</option>
         <option value="4" ${String(rules.wild)==="4"?"selected":""}>4 pts</option></select></label>
+      <label>🛑 Stop cards<select id="ruleStop" ${dis}>
+        <option value="popup" ${String(rules.stopRule||"5")==="popup"?"selected":""}>Pop-up (instant)</option>
+        <option value="5" ${String(rules.stopRule||"5")==="5"?"selected":""}>5-second countdown</option>
+        <option value="10" ${String(rules.stopRule)==="10"?"selected":""}>10-second countdown</option></select></label>
     </div>
     <div class="art-section">
       <div style="font-weight:bold;font-size:13px">🎴 Card style</div>
       <div class="style-swatches" id="styleSwatches"></div>
+    </div>
+    <div class="art-section" style="margin-top:18px">
+      <div style="font-weight:bold;font-size:13px">🎨 Table background</div>
+      <div class="style-swatches" id="bgSwatches"></div>
     </div>
     <div class="art-section" style="margin-top:18px">
       <button class="btn alt" id="openDesigner2" style="font-size:14px">🎨 Design your own cards</button>
@@ -1142,19 +1180,27 @@ function buildSettingsPanel(rules, amCtl, view){
     el.innerHTML=`<span style="filter:drop-shadow(0 1px 1px #000)">${s.sw}</span><span class="lab">${s.name}</span>`;
     if(amCtl) el.onclick=()=>{ updateRules({style:id}); };
     sw.appendChild(el);});
+  // table background swatches
+  const bgw=$("bgSwatches");
+  if(bgw) Object.keys(BG_THEMES).forEach(id=>{const b=BG_THEMES[id];const el=document.createElement("div");
+    el.className="swatch"+((rules.bg||"green")===id?" sel":"");
+    el.style.background=b.grad; el.title=b.name;
+    el.innerHTML=`<span class="lab">${b.name}</span>`;
+    if(amCtl) el.onclick=()=>{ updateRules({bg:id}); };
+    bgw.appendChild(el);});
   const od=$("openDesigner2"); if(od) od.onclick=()=>{ hide("lobby"); showDesigner(); $("dzBack").onclick=()=>{ hide("designer"); show("lobby"); }; };
   // wire rule selects
   if(amCtl){
-    ["ruleGoal","ruleHand","ruleAI","ruleDecks","ruleWild"].forEach(id=>{ const el=$(id); if(el) el.onchange=()=>gatherAndSendRules(); });
+    ["ruleGoal","ruleHand","ruleAI","ruleDecks","ruleWild","ruleStop"].forEach(id=>{ const el=$(id); if(el) el.onchange=()=>gatherAndSendRules(); });
     const sb=$("startBtn"); if(sb) sb.onclick=()=>{ initAudio(); startGameCtl(); };
   }
 }
 function gatherAndSendRules(){ updateRules({
   goalSel:$("ruleGoal").value, hand:parseInt($("ruleHand").value), aiCount:parseInt($("ruleAI").value),
-  decks:parseInt($("ruleDecks").value), wild:parseInt($("ruleWild").value) }); }
+  decks:parseInt($("ruleDecks").value), wild:parseInt($("ruleWild").value), stopRule:$("ruleStop").value }); }
 function updateRules(partial){
-  if(ME.role==="host"){ Object.assign(G.rules,partial); applyCardStyle(G.rules.style); broadcast(); }
-  else { const merged=Object.assign({},(lastView&&lastView.rules)||{},partial); if(partial.style)applyCardStyle(partial.style); clientSend({kind:"setRules",rules:merged}); }
+  if(ME.role==="host"){ Object.assign(G.rules,partial); applyCardStyle(G.rules.style); applyTableBg(G.rules.bg); broadcast(); }
+  else { const merged=Object.assign({},(lastView&&lastView.rules)||{},partial); if(partial.style)applyCardStyle(partial.style); if(partial.bg)applyTableBg(partial.bg); clientSend({kind:"setRules",rules:merged}); }
 }
 function startGameCtl(){ if(ME.role==="host") doStart(false); else clientSend({kind:"requestStart"}); }
 function returnToLobbyCtl(){ closeModal(); if(ME.role==="host"){ G.started=false; enterLobby(); broadcast(); } else clientSend({kind:"requestLobby"}); }
@@ -1263,10 +1309,14 @@ function shakeScreen(level){ if(REDUCE)return; const g=$("game")||document.body;
   setTimeout(()=>g.classList.remove(cls), 300+Math.min(3,level)*250); }
 function setFanfare(fan){
   const combo=fan.combo||1; const lvl=Math.min(3,combo);
-  shakeScreen(lvl); confettiBurst(1800+combo*1000, 120+combo*110); sfx("win"); buzz([40,30,80,30,120].slice(0,1+combo*2));
+  shakeScreen(lvl); confettiBurst(1800+combo*1000, 120+combo*110); sfx("fanfare"); buzz([40,30,80,30,120].slice(0,1+combo*2));
+  // say the set name out loud
+  const nm = fan.setType==="wild" ? "Wild" : cardVisual(fan.setType).label;
+  speak((combo>=2?`Combo ${combo}! `:"") + "Three " + nm + (/s$/i.test(nm)?"es":"s") + "!");
   if(REDUCE){ toast2(`${fan.avatar} ${esc(fan.name)} scored a set! ${combo>=2?'COMBO x'+combo:''}`); return; }
   const s=$("slam"); if(!s)return;
-  const label = fan.setType==="wild"?"3 WILDS!":"3 "+DEF[fan.setType].name.toUpperCase()+"S!";
+  const dname = fan.setType==="wild"?"WILDS":esc(cardVisual(fan.setType).label.toUpperCase())+"S";
+  const label = "3 "+dname+"!";
   const comboLine = combo>=2?`<div class="combo-line">🔥 COMBO ×${combo}! 🔥</div>`:"";
   s.className="on level"+lvl;
   s.innerHTML=`<div class="flash" style="background:radial-gradient(circle at 50% 45%, #f4b400, transparent 65%)"></div>`+
@@ -1286,6 +1336,7 @@ function grandChampBanner(){
 let prevPoints={}, prevSnap=null, winShown=false;
 function renderGameFor(view){
   lastView=view;
+  if(view.style) applyCardStyle(view.style); if(view.bg) applyTableBg(view.bg);
   $("rcChip").textContent = ROOM==="SOLO"?"Solo":("Room "+view.room);
   const maxPts=Math.max(0,...view.players.map(p=>p.points)); const crown=p=>(p.points===maxPts&&maxPts>0)?'<span title="In the lead!">👑</span> ':'';
   // opponents = everyone who isn't you
@@ -1453,15 +1504,14 @@ function localPrompt(prompt){ // host's own seat
 }
 // honor the player's Stop-card preference (Ask / Auto / Never)
 function humanStopDecision(prompt){
-  if(STOPMODE==="never") return Promise.resolve(false);
-  if(STOPMODE==="auto") return Promise.resolve(clientAutoStop(prompt));
-  // does this player even hold a Stop? (host knows; for safety just run the countdown)
-  return humanStopCountdown(prompt);
+  const rule=(lastView&&lastView.stopRule)||"5"; // controller-set: popup | 5 | 10
+  if(rule==="popup") return humanWantStop(prompt);
+  return humanStopCountdown(prompt, rule==="10"?10:5);
 }
 let stopCountdown=null;
-function humanStopCountdown(prompt){
+function humanStopCountdown(prompt,secs){
   return new Promise(res=>{
-    const secs=STOPTIME, total=secs*10; let remaining=total, done=false;
+    secs=secs||5; const total=secs*10; let remaining=total, done=false;
     const finish=(v)=>{ if(done)return; done=true; clearInterval(iv); stopCountdown=null; hidePrompt();
       if(lastView){const you=lastView.players.find(p=>p.isYou); if(you)renderHand(lastView,you);} res(v); };
     stopCountdown={resolve:()=>finish(true)};
@@ -1505,7 +1555,8 @@ function chooseTarget(t,validIds,view){return new Promise(res=>{const btns=valid
 function chooseSwapPair(view){return new Promise(res=>{const ps=view.players;const opts=[];for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++)opts.push(`<button class="pbtn choice" onclick="__pair('${ps[i].id}','${ps[j].id}')">${ps[i].avatar} ${esc(ps[i].name)} ↔ ${ps[j].avatar} ${esc(ps[j].name)}</button>`);
   showPrompt(`<div class="pq">🔄 Swap whose hands?</div><div class="pbtns">${opts.join("")}<button class="pbtn choice grey" onclick="__pair()">Cancel</button></div>`);window.__pair=(a,b)=>{hidePrompt();res(a?[a,b]:null);};});}
 function chooseRequestType(){return new Promise(res=>{const types=["charlie","spike","walter","wild","stop","freepoint","stealpoint","draw3","seesteal","stealcard","request","swap"];
-  const btns=types.map(t=>`<button class="pbtn choice" onclick="__rt('${t}')">${DEF[t].art} ${DEF[t].name}</button>`).join("");showPrompt(`<div class="pq">🙏 Ask for which card?</div><div class="pbtns">${btns}<button class="pbtn choice grey" onclick="__rt('')">Cancel</button></div>`);window.__rt=t=>{hidePrompt();res(t||null);};});}
+  const cards=types.map(t=>`<div class="reqpick" onclick="__rt('${t}')">${cardHTML({id:-60,t})}</div>`).join("");
+  showPrompt(`<div class="pq">🙏 Ask for which card?</div><div class="pbtns cards reqgrid">${cards}</div><div class="pbtns" style="margin-top:8px"><button class="pbtn choice grey" onclick="__rt('')">Cancel</button></div>`);window.__rt=t=>{hidePrompt();res(t||null);};});}
 function pickFromHand(prompt){return new Promise(res=>{
   const blind=prompt.blind;
   const cards=prompt.cards.map(c=> blind?`<div class="pickback" onclick="__take(${c.id})">🌵</div>`:`<div onclick="__take(${c.id})" style="cursor:pointer">${cardHTML(c)}</div>`).join("");
@@ -1554,15 +1605,11 @@ function showSettings(){
     <div class="setrow"><span>🔊 Sound</span>${seg([{v:'on',l:'On'},{v:'off',l:'Off'}],SOUND?'on':'off','__snd')}</div>
     <div class="setrow"><span>✨ Animations</span>${seg([{v:'on',l:'Full'},{v:'off',l:'Reduced'}],ANIM?'on':'off','__anim')}</div>
     <div class="setrow"><span>🌗 Theme</span>${seg([{v:'day',l:'Day'},{v:'night',l:'Night'}],night?'night':'day','__thm')}</div>
-    <div class="setrow col"><span>🛑 My Stop cards</span>${seg([{v:'ask',l:'Countdown'},{v:'auto',l:'Auto'},{v:'never',l:'Never'}],STOPMODE,'__stop')}
-      <div class="setnote">Countdown = your Stop card lights up, tap it to block before time runs out · Auto = block automatically when it helps · Never = keep them in hand</div></div>
-    ${STOPMODE==='ask'?`<div class="setrow"><span>⏱️ Stop timer</span>${seg([{v:'5',l:'5s'},{v:'10',l:'10s'}],String(STOPTIME),'__stoptime')}</div>`:''}
+    <div class="setnote" style="margin-top:8px">🛑 Stop-card behaviour (pop-up vs countdown), card style & table colour are set by the host/winner in the game lobby.</div>
     <div class="opts"><button onclick="showRules()">📖 How to play</button><button style="background:#eee" onclick="closeModal()">Done</button></div>`);
   window.__snd=v=>{ if((v==='on')!==SOUND)toggleSound(); refreshSeg(); };
   window.__anim=v=>{ setAnim(v==='on'); refreshSeg(); };
   window.__thm=v=>{ const isNight=document.body.getAttribute("data-theme")==="night"; if((v==='night')!==isNight)toggleTheme(); refreshSeg(); };
-  window.__stop=v=>{ setStopMode(v); refreshSeg(); };
-  window.__stoptime=v=>{ setStopTime(v); refreshSeg(); };
   function refreshSeg(){ showSettings(); }
 }
 // ---- Notifications history ----
@@ -1627,6 +1674,7 @@ function showRules(){ modal(`<h2>How to play 🌵</h2>
 function boot(){
   if(localStorage.getItem("cactus_theme")==="night"){document.body.setAttribute("data-theme","night");$("themeToggle").textContent="☀️ Day mode";}
   loadDeck(); applyCardStyle("classic");
+  loadVoices(); try{ if(window.speechSynthesis) window.speechSynthesis.onvoiceschanged=loadVoices; }catch(e){}
   document.body.classList.add("home");
   // floating background cacti (home only)
   if(!REDUCE){["🌵","🌵","🌵","🌷","🌶️","🪨"].forEach((e,i)=>{ const c=document.createElement("div"); c.className="floatcactus"; c.textContent=e;
