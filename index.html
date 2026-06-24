@@ -230,6 +230,12 @@
     box-shadow:0 3px 8px rgba(0,0,0,.32),inset 0 0 0 2px rgba(255,255,255,.55),inset 0 0 0 3px rgba(0,0,0,.06);
     user-select:none;scroll-snap-align:center;margin:0 -7px;}
   .card.rise{animation:rise .5s cubic-bezier(.2,.9,.3,1.3) backwards;}
+  .card.slidein{animation:cardIn .42s cubic-bezier(.2,.9,.3,1.3) backwards;}
+  .card.slideout{pointer-events:none;animation:cardOut .34s ease forwards;z-index:0;}
+  @keyframes cardIn{from{transform:translateX(70px) translateY(26px) scale(.55) rotate(10deg);opacity:0;}60%{opacity:1;}to{transform:none;opacity:1;}}
+  @keyframes cardOut{to{transform:translateY(70px) scale(.45) rotate(-12deg);opacity:0;}}
+  #hand:not(.myturn) .card{cursor:default;}
+  #hand:not(.myturn) .card:hover{transform:none;box-shadow:0 3px 8px rgba(0,0,0,.32),inset 0 0 0 2px rgba(255,255,255,.55),inset 0 0 0 3px rgba(0,0,0,.06);}
   .card:not(:hover){filter:none;}
   .card .art img{max-height:72px;max-width:88%;object-fit:contain;border-radius:6px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25));}
   @keyframes deal{from{transform:translateY(60px) rotate(-8deg) scale(.7);opacity:0;}to{opacity:1;}}
@@ -408,7 +414,33 @@
   body.home .floatcactus{display:block;}
   @keyframes rise{to{transform:translateY(-115vh) rotate(360deg);}}
   @media(prefers-reduced-motion:reduce){*{animation-duration:.001s !important;}}
-  @media(max-width:560px){.card{width:98px;height:138px;}.card .art{font-size:42px;height:64px;}.card .nm{font-size:12px;}#hand{min-height:166px;padding-top:18px;}}
+  @media(max-width:560px){
+    #game{margin:4px;padding:8px 5px 206px;border-width:6px;outline-offset:-8px;border-radius:15px;}
+    #game::before{inset:6px;}
+    #turnIndicator{margin:0 0 7px;min-height:32px;}
+    #turnIndicator .pill{font-size:14px;padding:6px 14px;gap:6px;}
+    #turnIndicator .pill .em{width:24px;height:24px;font-size:16px;}
+    #opponents{gap:6px;margin:2px 0 8px;}
+    .opp{min-width:0;flex:1 1 44%;padding:6px 7px;}
+    .opp .nm{font-size:11.5px;} .opp .em{width:24px;height:24px;font-size:15px;}
+    .mini{width:15px;height:21px;margin-left:-8px;}
+    #center{gap:12px;margin:4px 0 2px;}
+    .pilecard,.discardslot,.discardwrap{width:76px;height:106px;}
+    .pilecard.draw{font-size:34px;} .pilecard.point{font-size:32px;}
+    .pile{font-size:10px;gap:3px;}
+    .pilecard .count{width:26px;height:26px;font-size:12px;}
+    #centerZone{margin-top:8px;}
+    #log{font-size:clamp(16px,5.4vw,23px);}
+    .card{width:90px;height:127px;}.card .art{font-size:39px;height:58px;}.card .nm{font-size:12px;}
+    .card .badge{width:21px;height:21px;font-size:11px;top:28px;}
+    #hand{min-height:150px;padding:14px 6px 4px;}
+    #youhead{margin-bottom:3px;gap:4px;}
+    #youhead .me{font-size:14px;}
+    #controls .btn.sm{font-size:13px;padding:8px 12px;}
+    .icbtn{width:34px;height:34px;}
+    #topbar{padding:6px 8px;} #topbar .ti{font-size:13px;}
+  }
+  @media(max-width:560px) and (max-height:680px){ #game{padding-bottom:188px;} #hand{min-height:132px;} .card{width:80px;height:113px;} .card .art{font-size:33px;height:50px;} }
 </style>
 </head>
 <body data-theme="day">
@@ -432,7 +464,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.9</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.0</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -1539,17 +1571,22 @@ function saveArt(){ try{localStorage.setItem("cactus_cardart",JSON.stringify(SAV
 function loadArt(){ try{SAVEDART=JSON.parse(localStorage.getItem("cactus_cardart")||"{}");}catch(e){SAVEDART={};} }
 let prevHandIds=new Set();
 function renderHand(view,you){ const h=$("hand");const myTurn=view.activeId===you.id&&view.phase==="playing";
-  const sorted=[...view.yourHand].sort((a,b)=>{const ca=isChar(a.t)?0:1,cb=isChar(b.t)?0:1;return ca!==cb?ca-cb:(a.t<b.t?-1:1);});
-  h.innerHTML=""; sel = sel.filter(id=>view.yourHand.some(c=>c.id===id));
-  const curIds=new Set(view.yourHand.map(c=>c.id));
-  let riseN=0;
-  sorted.forEach((c)=>{const stopChoice = !!stopCountdown && c.t==="stop";
-    const div=document.createElement("div");div.innerHTML=cardHTML(c,{clickable:myTurn||stopChoice,sel:sel.includes(c.id)});const el=div.firstChild;
-    if(stopChoice) el.classList.add("stopglow");
-    else if(!prevHandIds.has(c.id) && prevHandIds.size>0 && !REDUCE){ el.classList.add("rise"); el.style.animationDelay=(riseN*0.07)+"s"; riseN++; }
-    h.appendChild(el);});
-  if(view.yourHand.length===0)h.innerHTML='<div style="color:#789;padding:18px">— empty hand —</div>';
-  prevHandIds=curIds;
+  const cards=[...view.yourHand].sort((a,b)=>{const ca=isChar(a.t)?0:1,cb=isChar(b.t)?0:1;return ca!==cb?ca-cb:(a.t<b.t?-1:1);});
+  sel=sel.filter(id=>cards.some(c=>c.id===id));
+  h.classList.toggle("myturn", myTurn || !!stopCountdown);
+  const wantIds=new Set(cards.map(c=>c.id));
+  const ph=h.querySelector(".handempty"); if(ph&&cards.length)ph.remove();
+  // slide OUT cards no longer in hand (played, stolen, swapped away)
+  [...h.querySelectorAll(".card")].forEach(el=>{ if(!wantIds.has(+el.dataset.cid) && !el.classList.contains("slideout")){
+    el.classList.remove("slidein"); el.classList.add("slideout"); el.style.pointerEvents="none"; const e=el; setTimeout(()=>{if(e.parentNode)e.remove();}, REDUCE?0:340); } });
+  // add NEW cards (slide in) + update + reorder
+  cards.forEach(c=>{ const stopChoice=!!stopCountdown&&c.t==="stop";
+    let el=h.querySelector('.card[data-cid="'+c.id+'"]:not(.slideout)');
+    if(!el){ const d=document.createElement("div"); d.innerHTML=cardHTML(c,{clickable:true,sel:sel.includes(c.id)}); el=d.firstChild; el.dataset.cid=c.id; if(!REDUCE){el.classList.add("slidein"); el.addEventListener("animationend",function h(){el.classList.remove("slidein");el.removeEventListener("animationend",h);});} }
+    el.classList.toggle("sel", sel.includes(c.id));
+    el.classList.toggle("stopglow", stopChoice);
+    h.appendChild(el); }); // re-append to keep sorted order
+  if(!cards.length && !h.querySelector(".slideout") && !h.querySelector(".handempty")) h.innerHTML='<div class="handempty" style="color:#9bbf9b;padding:18px;font-family:\'Fredoka\',sans-serif">— empty hand —</div>';
 }
 let sel=[];
 function renderControls(view,you){const c=$("controls");c.innerHTML="";
