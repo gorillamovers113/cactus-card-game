@@ -309,6 +309,9 @@
   #chatinput input{flex:1;padding:9px;border-radius:12px;border:2px solid var(--panelbd);font-family:inherit;background:var(--paper);color:var(--txt);}
   #reactbar{display:flex;gap:4px;padding:6px 8px;flex-wrap:wrap;border-top:1px solid var(--panelbd);}
   #reactbar button{font-size:20px;background:var(--green-vl);border:none;border-radius:10px;padding:4px 8px;cursor:pointer;}
+  .quickphrases{display:flex;flex-wrap:wrap;gap:5px;width:100%;margin-top:6px;border-top:1px solid var(--panelbd);padding-top:6px;}
+  .quickphrases .qp{font-size:13px;font-family:'Fredoka',sans-serif;font-weight:600;background:var(--green);color:#fff;border:none;border-radius:14px;padding:6px 11px;cursor:pointer;}
+  .quickphrases .qp:active{transform:translateY(1px);}
   .floatemoji{position:fixed;font-size:40px;z-index:60;pointer-events:none;animation:floatup 1.6s ease-out forwards;}
   @keyframes floatup{0%{transform:translateY(0) scale(.5);opacity:0;}15%{opacity:1;transform:translateY(-20px) scale(1.2);}100%{transform:translateY(-160px) scale(1);opacity:0;}}
   .toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--green-d);color:#fff;padding:9px 16px;
@@ -463,8 +466,8 @@
   </div>
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
-  <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.1</span></div>
+  <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.2</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -594,6 +597,18 @@ const STYLES={
     back:"repeating-linear-gradient(45deg,#ef5350 0 7px,#b71c1c 7px 14px)", art:{charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}, sw:"💥"},
   critters:{name:"Critters", paper:"#f4fbf2", ink:"#1b3a1f", border:"#1c281e", backColor:"#2b3b2e",
     back:"repeating-linear-gradient(45deg,#37503b 0 7px,#2b3b2e 7px 14px)", art:{charlie:"🐢",spike:"🦂",walter:"🦎",wild:"🌈"}, sw:"🦂"},
+  ocean:{name:"Ocean", paper:"#eef9ff", ink:"#0d3b52", border:"#0a2c40", backColor:"#123a52",
+    back:"repeating-linear-gradient(45deg,#1e5f86 0 7px,#123a52 7px 14px)", art:{charlie:"🐚",spike:"🐠",walter:"🐙",wild:"🌊"}, sw:"🌊"},
+  candy:{name:"Candy", paper:"#fff0f6", ink:"#7a1f4a", border:"#a83b6e", backColor:"#c2487f",
+    back:"repeating-linear-gradient(45deg,#e87bb0 0 7px,#c2487f 7px 14px)", art:{charlie:"🍬",spike:"🍭",walter:"🧁",wild:"🌈"}, sw:"🍭"},
+  space:{name:"Space", paper:"#171a2e", ink:"#cfe0ff", border:"#0a0c18", backColor:"#1b2247",
+    back:"repeating-linear-gradient(45deg,#2a3470 0 7px,#1b2247 7px 14px)", art:{charlie:"🪐",spike:"🚀",walter:"👽",wild:"⭐"}, sw:"🚀"},
+  gold:{name:"Royal Gold", paper:"#fffae8", ink:"#5b4310", border:"#8a6a16", backColor:"#7a5d12",
+    back:"repeating-linear-gradient(45deg,#caa53e 0 7px,#7a5d12 7px 14px)", art:{charlie:"👑",spike:"💰",walter:"💎",wild:"⭐"}, sw:"👑"},
+  spooky:{name:"Spooky", paper:"#211b2b", ink:"#e6d8ff", border:"#0d0a14", backColor:"#2a1f3a",
+    back:"repeating-linear-gradient(45deg,#46315e 0 7px,#2a1f3a 7px 14px)", art:{charlie:"🎃",spike:"👻",walter:"🦇",wild:"💀"}, sw:"🎃"},
+  mono:{name:"Minimal", paper:"#fafafa", ink:"#222", border:"#222", backColor:"#333",
+    back:"repeating-linear-gradient(45deg,#555 0 7px,#333 7px 14px)", art:{charlie:"🌵",spike:"🌵",walter:"🌵",wild:"✳️"}, sw:"⚪"},
 };
 let ART={charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}; // current style's emoji art
 let CURSTYLE="classic";
@@ -629,6 +644,11 @@ const BG_THEMES={
   purple:{name:"Royal",sw:"🟣",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #6d4ca8 0%, #543a86 45%, #3a285e 78%, #241640 100%)"},
   sand:{name:"Desert",sw:"🟡",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #c79a52 0%, #a87d35 45%, #7d5d22 78%, #573f14 100%)"},
   midnight:{name:"Midnight",sw:"⚫",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #2a3550 0%, #1c2540 45%, #131a2e 78%, #0a0e1a 100%)"},
+  teal:{name:"Teal",sw:"🟦",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #2ba39a 0%, #1d827b 45%, #135c57 78%, #0a3a36 100%)"},
+  rose:{name:"Rose",sw:"🌸",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #c85a86 0%, #a3406a 45%, #76294b 78%, #4d1730 100%)"},
+  charcoal:{name:"Charcoal",sw:"⬛",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #3a3f44 0%, #2a2e33 45%, #1c1f23 78%, #101214 100%)"},
+  sunset:{name:"Sunset",sw:"🌇",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #d2683f 0%, #b14a3a 42%, #7e3050 75%, #3a1f45 100%)"},
+  emerald:{name:"Emerald",sw:"💚",grad:"radial-gradient(ellipse 120% 80% at 50% 30%, #1faa6b 0%, #128a55 45%, #0a6340 78%, #053f29 100%)"},
 };
 function applyTableBg(key){ const g=$("game"); if(!g)return; const b=BG_THEMES[key]||BG_THEMES.green; g.style.background=b.grad; }
 
@@ -638,9 +658,13 @@ function code4(){let s="";const ch="ABCDEFGHJKMNPQRSTUVWXYZ23456789";for(let i=0
 
 // ---------------- Sound (richer synthesis + light reverb + speech) ----------------
 let AC=null, SOUND=(localStorage.getItem("cactus_sound")!=="0"); let MASTER=null, REVERB=null;
+let VOL=(localStorage.getItem("cactus_vol")!=null?parseFloat(localStorage.getItem("cactus_vol")):0.85);
+let HAPTICS=(localStorage.getItem("cactus_haptics")!=="0");
+function setVol(v){ VOL=Math.max(0,Math.min(1,v)); localStorage.setItem("cactus_vol",VOL); if(MASTER)MASTER.gain.value=VOL; }
+function setHaptics(on){ HAPTICS=!!on; localStorage.setItem("cactus_haptics",on?"1":"0"); }
 function initAudio(){ if(!AC){ try{
     AC=new (window.AudioContext||window.webkitAudioContext)();
-    MASTER=AC.createGain(); MASTER.gain.value=0.85; MASTER.connect(AC.destination);
+    MASTER=AC.createGain(); MASTER.gain.value=VOL; MASTER.connect(AC.destination);
     // small ambience: feedback delay reverb
     REVERB=AC.createGain(); REVERB.gain.value=0.16; const dl=AC.createDelay(); dl.delayTime.value=0.085; const fb=AC.createGain(); fb.gain.value=0.28;
     const lp=AC.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=2600;
@@ -673,7 +697,7 @@ const SFX={
   tick:()=>{tone(1200,0.04,"square",0.04);},
 };
 function sfx(n){ if(SFX[n])SFX[n](); }
-function buzz(ms){ try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
+function buzz(ms){ if(!HAPTICS)return; try{ if(navigator.vibrate) navigator.vibrate(ms); }catch(e){} }
 let VOICES=[];
 function loadVoices(){ try{ VOICES=window.speechSynthesis?window.speechSynthesis.getVoices():[]; }catch(e){} }
 function speak(text){ if(!SOUND)return; try{ if(!('speechSynthesis' in window))return; const u=new SpeechSynthesisUtterance(text);
@@ -835,7 +859,7 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
   over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,bigEvent:null,_bigId:0,
   fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,reqEvent:null,_reqEvId:0,takeEvent:null,_takeId:0,swapEvent:null,_swapId:0,
-  rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic",bg:"green",stopRule:"5"},
+  rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic",bg:"green",stopRule:"5",aiLevel:"normal"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
 function scored(p){ if(G.comboBy===p.id) G.comboN++; else { G.comboBy=p.id; G.comboN=1; } return G.comboN; }
 function controllerIds(){ return G?[G.hostId,G.lastWinnerId].filter(Boolean):["p0"]; }
@@ -919,9 +943,12 @@ function nextAction(playerId){
     const qi=G._actionQueue.findIndex(e=>e.playerId===playerId);
     if(qi>=0){ const e=G._actionQueue.splice(qi,1)[0]; setTimeout(()=>res(e.action),0); return; }
     G._activeResolver={playerId,res};
+    const tt=parseInt(G.rules.turnTime)||0; clearTimeout(G._turnTimer);
+    if(tt>0){ G._turnTimer=setTimeout(()=>{ if(G._activeResolver&&G._activeResolver.playerId===playerId) submitActionFrom(playerId,{kind:"drawEnd"}); }, tt*1000); }
   });
 }
 function submitActionFrom(playerId,action){
+  clearTimeout(G._turnTimer);
   if(G._activeResolver&&G._activeResolver.playerId===playerId){ const r=G._activeResolver; G._activeResolver=null; r.res(action); }
   else { G._actionQueue.push({playerId,action}); if(G._actionQueue.length>8)G._actionQueue.shift(); }
 }
@@ -951,7 +978,7 @@ async function humanTurnLoop(p){
     if(ended) return endTurn();
   }
 }
-function endTurn(){ if(G.over)return; G.cur=nextIndex(G.cur); G._actionQueue=[]; setTimeout(beginTurn,300); }
+function endTurn(){ if(G.over)return; clearTimeout(G._turnTimer); G.cur=nextIndex(G.cur); G._actionQueue=[]; setTimeout(beginTurn,300); }
 
 // apply an action object from player p. returns true if turn ended.
 async function applyAction(p,action){
@@ -1087,10 +1114,12 @@ async function aiTurn(p){
 function bestSet(p){ const wilds=p.hand.filter(c=>c.t==="wild");let best=null;
   for(const type of CHAR_TYPES){const have=p.hand.filter(c=>c.t===type);if(have.length+wilds.length>=3){const uw=Math.max(0,3-have.length);const cards=[...have.slice(0,3-uw),...wilds.slice(0,uw)];const pts=setPoints(type);if(!best||pts>best.pts)best={cards,type,pts};}}
   if(wilds.length>=3){const pts=WILDBONUS;if(!best||pts>best.pts)best={cards:wilds.slice(0,3),type:"wild",pts};} return best; }
+function aiLevel(){ return (G.rules&&G.rules.aiLevel)||"normal"; }
 function aiChooseMove(p){
-  const set=bestSet(p); if(set)return{kind:"set",...set};
-  if(p.hand.some(c=>c.t==="freepoint")&&G.pointPile>0)return{kind:"action",card:p.hand.find(c=>c.t==="freepoint")};
-  if(p.hand.some(c=>c.t==="stealpoint")){const tgt=leaderExcept(p.id,true);if(tgt!=null)return{kind:"action",card:p.hand.find(c=>c.t==="stealpoint"),target:tgt};}
+  const lvl=aiLevel();
+  const set=bestSet(p); if(set){ if(lvl==="easy" && Math.random()<0.4){ /* easy AI sometimes misses an obvious set */ } else return{kind:"set",...set}; }
+  if(p.hand.some(c=>c.t==="freepoint")&&G.pointPile>0 && (lvl!=="easy"||Math.random()<0.6))return{kind:"action",card:p.hand.find(c=>c.t==="freepoint")};
+  if(p.hand.some(c=>c.t==="stealpoint") && (lvl!=="easy"||Math.random()<0.5)){const tgt=leaderExcept(p.id,true);if(tgt!=null)return{kind:"action",card:p.hand.find(c=>c.t==="stealpoint"),target:tgt};}
   if(!p._usedUtility){ const need=mostNeededType(p);
     if(p.hand.some(c=>c.t==="request")){const tgt=randomOtherWithCards(p.id);if(tgt!=null){p._usedUtility=true;return{kind:"action",card:p.hand.find(c=>c.t==="request"),target:tgt,requestType:need};}}
     if(p.hand.some(c=>c.t==="seesteal")){const tgt=randomOtherWithCards(p.id);if(tgt!=null){p._usedUtility=true;return{kind:"action",card:p.hand.find(c=>c.t==="seesteal"),target:tgt};}}
@@ -1102,12 +1131,14 @@ function mostNeededType(p){let best="charlie",bc=-1;for(const t of CHAR_TYPES){c
 function leaderExcept(id,mustPts){let best=null,bp=-1;for(const q of G.players){if(q.id===id)continue;if(mustPts&&q.points<=0)continue;if(q.points>bp){bp=q.points;best=q.id;}}return best;}
 function randomOtherWithCards(id){const o=G.players.filter(q=>q.id!==id&&q.hand.length>0);return o.length?rand(o).id:null;}
 function aiWantStop(p,actor,t,targetId,stops){
-  if(stops%2===1){ if(p.id===actor.id&&(t==="freepoint"||t==="stealpoint"))return Math.random()<0.7; return false; }
+  const lvl=aiLevel(); const k = lvl==="easy"?0.45 : lvl==="hard"?1.25 : 1; // difficulty multiplier
+  const R=(x)=>Math.random()<Math.min(1,x*k);
+  if(stops%2===1){ if(p.id===actor.id&&(t==="freepoint"||t==="stealpoint"))return R(0.7); return false; }
   const close=actor.points>=G.goal-1;
-  if(t==="freepoint"&&close)return true;
-  if(t==="stealpoint"){if(targetId===p.id)return true;if(close)return Math.random()<0.8;}
-  if((t==="stealcard"||t==="seesteal"||t==="request"||t==="swap")&&targetId===p.id)return Math.random()<0.6;
-  if(close)return Math.random()<0.3; return false;
+  if(t==="freepoint"&&close)return lvl==="easy"?R(0.7):true;
+  if(t==="stealpoint"){if(targetId===p.id)return lvl==="easy"?R(0.7):true;if(close)return R(0.8);}
+  if((t==="stealcard"||t==="seesteal"||t==="request"||t==="swap")&&targetId===p.id)return R(0.6);
+  if(close)return R(0.3); return false;
 }
 function aiPickFromHand(tgt,actor){const need=mostNeededType(actor);const c=tgt.hand.find(x=>x.t===need)||tgt.hand.find(x=>x.t==="wild")||tgt.hand.find(x=>x.t==="stop")||(tgt.hand.length?rand(tgt.hand):null);return c?c.id:0;}
 
@@ -1245,6 +1276,14 @@ function buildSettingsPanel(rules, amCtl, view){
         <option value="popup" ${String(rules.stopRule||"5")==="popup"?"selected":""}>Pop-up (instant)</option>
         <option value="5" ${String(rules.stopRule||"5")==="5"?"selected":""}>5-second countdown</option>
         <option value="10" ${String(rules.stopRule)==="10"?"selected":""}>10-second countdown</option></select></label>
+      <label>🤖 AI difficulty<select id="ruleAILevel" ${dis}>
+        <option value="easy" ${String(rules.aiLevel)==="easy"?"selected":""}>Easy</option>
+        <option value="normal" ${String(rules.aiLevel||"normal")==="normal"?"selected":""}>Normal</option>
+        <option value="hard" ${String(rules.aiLevel)==="hard"?"selected":""}>Hard</option></select></label>
+      <label>⏱️ Turn timer<select id="ruleTurnTime" ${dis}>
+        <option value="0" ${String(rules.turnTime||"0")==="0"?"selected":""}>Off</option>
+        <option value="30" ${String(rules.turnTime)==="30"?"selected":""}>30 seconds</option>
+        <option value="60" ${String(rules.turnTime)==="60"?"selected":""}>60 seconds</option></select></label>
     </div>
     <div class="art-section">
       <div style="font-weight:bold;font-size:13px">🎴 Card style</div>
@@ -1278,13 +1317,14 @@ function buildSettingsPanel(rules, amCtl, view){
   const od=$("openDesigner2"); if(od) od.onclick=()=>{ hide("lobby"); showDesigner(); $("dzBack").onclick=()=>{ hide("designer"); show("lobby"); }; };
   // wire rule selects
   if(amCtl){
-    ["ruleGoal","ruleHand","ruleAI","ruleDecks","ruleWild","ruleStop"].forEach(id=>{ const el=$(id); if(el) el.onchange=()=>gatherAndSendRules(); });
+    ["ruleGoal","ruleHand","ruleAI","ruleDecks","ruleWild","ruleStop","ruleAILevel","ruleTurnTime"].forEach(id=>{ const el=$(id); if(el) el.onchange=()=>gatherAndSendRules(); });
     const sb=$("startBtn"); if(sb) sb.onclick=()=>{ initAudio(); startGameCtl(); };
   }
 }
 function gatherAndSendRules(){ updateRules({
   goalSel:$("ruleGoal").value, hand:parseInt($("ruleHand").value), aiCount:parseInt($("ruleAI").value),
-  decks:parseInt($("ruleDecks").value), wild:parseInt($("ruleWild").value), stopRule:$("ruleStop").value }); }
+  decks:parseInt($("ruleDecks").value), wild:parseInt($("ruleWild").value), stopRule:$("ruleStop").value,
+  aiLevel:$("ruleAILevel").value, turnTime:parseInt($("ruleTurnTime").value) }); }
 function updateRules(partial){
   if(ME.role==="host"){ Object.assign(G.rules,partial); applyCardStyle(G.rules.style); applyTableBg(G.rules.bg); broadcast(); }
   else { const merged=Object.assign({},(lastView&&lastView.rules)||{},partial); if(partial.style)applyCardStyle(partial.style); if(partial.bg)applyTableBg(partial.bg); clientSend({kind:"setRules",rules:merged}); }
@@ -1748,7 +1788,8 @@ function addChat(name,avatar,text){ // host: store+broadcast+local
   G&&G.chat.push({name,avatar,text}); addChatLocal(name,avatar,text); broadcastEphemeral({kind:"chat",from:name,avatar,text}); }
 function sendChat(){ const t=$("chatText").value.trim();if(!t)return;$("chatText").value=""; initAudio();
   if(ME.role==="host") addChat(ME.name,ME.avatar,t); else clientSend({kind:"chat",text:t}); if(ME.role!=="host")addChatLocal(ME.name,ME.avatar,t); }
-function addChatLocal(name,avatar,text){const l=$("chatlog");const d=document.createElement("div");d.className="cmsg";d.innerHTML=`<span class="from">${avatar} ${esc(name)}</span><div>${esc(text)}</div>`;l.appendChild(d);l.scrollTop=l.scrollHeight;sfx("chat");if(!chatOpen){unread++;const u=$("unread");u.textContent=unread;u.classList.remove("hidden");}}
+function addChatLocal(name,avatar,text){const l=$("chatlog");const d=document.createElement("div");d.className="cmsg";d.innerHTML=`<span class="from">${avatar} ${esc(name)}</span><div>${esc(text)}</div>`;l.appendChild(d);l.scrollTop=l.scrollHeight;sfx("chat");
+  if(!chatOpen){unread++;const u=$("unread");u.textContent=unread;u.classList.remove("hidden"); toast2(`${avatar} <b>${esc(name)}</b>: ${esc(text)}`);}}
 function doReact(emoji){ initAudio(); if(ME.role==="host"){fireReaction(ME.name,emoji);broadcastEphemeral({kind:"react",from:ME.name,emoji});} else clientSend({kind:"react",emoji}); if(ME.role!=="host")fireReaction(ME.name,emoji); }
 function fireReaction(name,emoji){const e=document.createElement("div");e.className="floatemoji";e.textContent=emoji;e.style.left=(20+Math.random()*60)+"%";e.style.bottom="150px";document.body.appendChild(e);setTimeout(()=>e.remove(),1700);}
 function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2200);}
@@ -1765,14 +1806,36 @@ function showSettings(){
   const seg=(opts,cur,fn)=>`<div class="segmented">${opts.map(o=>`<button class="${cur===o.v?'on':''}" data-v="${o.v}" onclick="${fn}('${o.v}')">${o.l}</button>`).join("")}</div>`;
   modal(`<h2>⚙️ Settings</h2>
     <div class="setrow"><span>🔊 Sound</span>${seg([{v:'on',l:'On'},{v:'off',l:'Off'}],SOUND?'on':'off','__snd')}</div>
+    <div class="setrow"><span>🔉 Volume</span><input type="range" id="volSlider" min="0" max="100" value="${Math.round(VOL*100)}" style="flex:1;max-width:160px;"></div>
+    <div class="setrow"><span>📳 Vibration</span>${seg([{v:'on',l:'On'},{v:'off',l:'Off'}],HAPTICS?'on':'off','__hap')}</div>
     <div class="setrow"><span>✨ Animations</span>${seg([{v:'on',l:'Full'},{v:'off',l:'Reduced'}],ANIM?'on':'off','__anim')}</div>
     <div class="setrow"><span>🌗 Theme</span>${seg([{v:'day',l:'Day'},{v:'night',l:'Night'}],night?'night':'day','__thm')}</div>
-    <div class="setnote" style="margin-top:8px">🛑 Stop-card behaviour (pop-up vs countdown), card style & table colour are set by the host/winner in the game lobby.</div>
-    <div class="opts"><button onclick="showRules()">📖 How to play</button><button style="background:#eee" onclick="closeModal()">Done</button></div>`);
+    <div class="setnote" style="margin-top:8px">🛑 Stop-card behaviour, AI difficulty, turn timer, card style & table colour are set by the host/winner in the game lobby.</div>
+    <div class="opts"><button onclick="showProfile()">👤 My profile & stats</button><button onclick="showRules()">📖 How to play</button><button style="background:#eee" onclick="closeModal()">Done</button></div>`);
   window.__snd=v=>{ if((v==='on')!==SOUND)toggleSound(); refreshSeg(); };
+  window.__hap=v=>{ setHaptics(v==='on'); if(v==='on')buzz(40); refreshSeg(); };
   window.__anim=v=>{ setAnim(v==='on'); refreshSeg(); };
   window.__thm=v=>{ const isNight=document.body.getAttribute("data-theme")==="night"; if((v==='night')!==isNight)toggleTheme(); refreshSeg(); };
+  const vs=$("volSlider"); if(vs) vs.oninput=()=>{ initAudio(); setVol(vs.value/100); };
   function refreshSeg(){ showSettings(); }
+}
+// ---- Profile & stats ----
+function showProfile(){
+  const stats=loadStats(); const me=stats[ME.name]||{wins:0,games:0}; const rate=me.games?Math.round(me.wins/me.games*100):0;
+  const board=Object.entries(stats).sort((a,b)=>b[1].wins-a[1].wins).slice(0,8).map(([n,s])=>`<div style="display:flex;justify-content:space-between;padding:2px 0"><span>${esc(n)}</span><b>${s.wins}W / ${s.games}G</b></div>`).join("")||"<i>No games yet</i>";
+  const ach=[]; if(me.games>=1)ach.push("🌵 Played your first game"); if(me.wins>=1)ach.push("🏆 First win!");
+  if(me.wins>=5)ach.push("🥇 5 wins"); if(me.wins>=10)ach.push("👑 10 wins"); if(me.wins>=25)ach.push("🌟 25 wins");
+  if(me.games>=10)ach.push("🎮 10 games played"); if(me.games>=50)ach.push("🎯 50 games played");
+  if(rate>=50&&me.games>=4)ach.push("🔥 50%+ win rate");
+  modal(`<div style="text-align:center"><div style="font-size:56px">${ME.avatar||"🌵"}</div><h2 style="margin:2px 0">${esc(ME.name||"Player")}</h2></div>
+    <div class="panel"><div style="display:flex;justify-content:space-around;text-align:center">
+      <div><div style="font-size:26px;font-weight:bold;color:var(--green-d)">${me.wins}</div><div style="font-size:12px;opacity:.8">Wins</div></div>
+      <div><div style="font-size:26px;font-weight:bold;color:var(--green-d)">${me.games}</div><div style="font-size:12px;opacity:.8">Games</div></div>
+      <div><div style="font-size:26px;font-weight:bold;color:var(--green-d)">${rate}%</div><div style="font-size:12px;opacity:.8">Win rate</div></div>
+    </div></div>
+    <div class="panel" style="text-align:left"><div style="font-weight:bold;margin-bottom:4px">🏅 Achievements</div>${ach.length?ach.map(a=>`<div>${a}</div>`).join(""):"<i>Play to earn achievements!</i>"}</div>
+    <div class="panel" style="text-align:left"><div style="font-weight:bold;margin-bottom:4px">📊 Win tracker (this device)</div>${board}</div>
+    <div class="opts"><button style="background:#eee" onclick="closeModal()">Close</button></div>`);
 }
 // ---- Notifications history ----
 function showHistory(){
@@ -1821,7 +1884,14 @@ function copyShare(){ if(ROOM==="SOLO")return; const url=location.origin+locatio
 
 // ---- reactions bar setup ----
 const REACTS=["👍","😂","😮","🌵","💎","🛑","🔥","😎","😭","🎉"];
-function buildReactBar(){const b=$("reactbar");b.innerHTML="";REACTS.forEach(e=>{const btn=document.createElement("button");btn.textContent=e;btn.onclick=()=>doReact(e);b.appendChild(btn);});}
+const QUICK_PHRASES=["Nice!","Oh no!","Got you! 😈","Good game!","Hurry up! ⏱️","So close!","Mercy! 🙏","Take that!","Lucky!","Your turn 👀"];
+function buildReactBar(){const b=$("reactbar");b.innerHTML="";
+  REACTS.forEach(e=>{const btn=document.createElement("button");btn.textContent=e;btn.onclick=()=>doReact(e);b.appendChild(btn);});
+  const ph=document.createElement("div"); ph.className="quickphrases";
+  QUICK_PHRASES.forEach(t=>{const btn=document.createElement("button");btn.className="qp";btn.textContent=t;btn.onclick=()=>quickSay(t);ph.appendChild(btn);});
+  b.appendChild(ph);
+}
+function quickSay(text){ initAudio(); if(ME.role==="host") addChat(ME.name,ME.avatar,text); else { clientSend({kind:"chat",text}); addChatLocal(ME.name,ME.avatar,text); } }
 
 // ---------------- rules modal ----------------
 function showRules(){ modal(`<h2>How to play 🌵</h2>
