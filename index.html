@@ -327,6 +327,13 @@
   #connecting .ctext{font-family:'Fredoka',sans-serif;font-weight:600;font-size:16px;text-align:center;padding:0 20px;}
   #connecting .ccancel{width:auto;}
   /* dramatic card slam */
+  #bigCountdown{position:fixed;left:0;right:0;top:14%;text-align:center;z-index:58;pointer-events:none;display:none;
+    font-family:'Luckiest Guy',cursive;font-size:clamp(90px,26vw,230px);line-height:1;color:#ffd34d;
+    text-shadow:0 5px 0 #b85e00,0 0 50px rgba(244,180,0,.85);-webkit-text-stroke:4px rgba(0,0,0,.55);}
+  #bigCountdown.on{display:block;}
+  #bigCountdown.tick{animation:cdpop .55s cubic-bezier(.2,1.4,.4,1);}
+  #bigCountdown.low{color:#ff5252;text-shadow:0 5px 0 #7a0000,0 0 50px rgba(255,82,82,.9);}
+  @keyframes cdpop{0%{transform:scale(1.7);opacity:.35;}55%{transform:scale(.95);}100%{transform:scale(1);opacity:1;}}
   #slam{position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;}
   #slam.on{display:flex;}
   #slam .flash{position:absolute;inset:0;opacity:0;animation:slamFlash .7s ease;}
@@ -403,7 +410,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.5</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.6</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -479,6 +486,7 @@
 </div>
 
 <div id="connecting"><div class="spin"></div><div class="ctext" id="ctext">Connecting…</div><button class="btn grey sm ccancel" onclick="goHome()">Cancel</button></div>
+<div id="bigCountdown"></div>
 <div id="slam"></div>
 <canvas id="confetti"></canvas>
 <div class="toaststack" id="toastStack"></div>
@@ -1515,8 +1523,10 @@ function humanStopDecision(prompt){
 let stopCountdown=null;
 function humanStopCountdown(prompt,secs){
   return new Promise(res=>{
-    secs=secs||5; const total=secs*10; let remaining=total, done=false;
-    const finish=(v)=>{ if(done)return; done=true; clearInterval(iv); stopCountdown=null; hidePrompt();
+    secs=secs||5; const total=secs*10; let remaining=total, done=false, lastShown=secs+1;
+    const bc=$("bigCountdown");
+    const showBig=(n)=>{ if(!bc||REDUCE)return; bc.textContent=n; bc.className="on tick"+(n<=2?" low":""); void bc.offsetWidth; };
+    const finish=(v)=>{ if(done)return; done=true; clearInterval(iv); stopCountdown=null; hidePrompt(); if(bc)bc.className="";
       if(lastView){const you=lastView.players.find(p=>p.isYou); if(you)renderHand(lastView,you);} res(v); };
     const haveStop = !!(lastView && (lastView.yourHand||[]).some(c=>c.t==="stop"));
     stopCountdown=haveStop?{resolve:()=>finish(true)}:null; // only tappable if you actually hold a Stop
@@ -1530,11 +1540,12 @@ function humanStopCountdown(prompt,secs){
       `<div class="pbtns"><button class="pbtn no" onclick="__pass()">${haveStop?"Let it happen":"OK"}</button></div>`);
     window.__pass=()=>finish(false);
     if(lastView){const you=lastView.players.find(p=>p.isYou); if(you)renderHand(lastView,you);} // highlight + enable the stop card
-    sfx("stop");
+    sfx("stop"); showBig(secs); lastShown=secs;
     const iv=setInterval(()=>{ remaining--; if(remaining<=0){ finish(false); return; }
-      const cd=document.querySelector("#promptZone .cd"); if(cd)cd.textContent=Math.ceil(remaining/10);
+      const n=Math.ceil(remaining/10);
+      const cd=document.querySelector("#promptZone .cd"); if(cd)cd.textContent=n;
       const fill=document.querySelector("#promptZone .cdfill"); if(fill)fill.style.width=(remaining/total*100)+"%";
-      if(remaining<=20 && remaining%5===0) sfx("click");
+      if(n!==lastShown){ lastShown=n; showBig(n); sfx(n<=2?"tick":"click"); }
     },100);
   });
 }
@@ -1660,7 +1671,7 @@ function dzSetColor(c){ if(c) setDeck(dzEditing,"color",c); else clearDeck(dzEdi
 function dzResetCard(){ delete DECK[dzEditing]; saveDeck(); openCardEditor(dzEditing); }
 function dzUpload(){ pendingArtSlot="__dz"; $("artFile").click(); }
 function goHome(){ _leaving=true; try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
-  closeModal();hidePrompt();stopCountdown=null;chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
+  closeModal();hidePrompt();stopCountdown=null;$("bigCountdown").className="";chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
   hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
   document.body.classList.add("home"); winShown=false; prevSnap=null; }
 
