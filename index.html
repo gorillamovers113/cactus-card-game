@@ -432,7 +432,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.7</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.8</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -1087,12 +1087,28 @@ function show(id){$(id).classList.remove("hidden");} function hide(id){$(id).cla
 // avatar picker
 function renderAvatars(){const w=$("avPick");w.innerHTML="";AVATARS.forEach(a=>{const d=document.createElement("div");d.className="av"+(a===ME.avatar?" sel":"");d.textContent=a;d.onclick=()=>{ME.avatar=a;localStorage.setItem("cactus_avatar",a);renderAvatars();};w.appendChild(d);});}
 
-function startSolo(){ if(!grabName())return; initAudio(); ME.role="host";ME.id="p0";ROOM="SOLO";
-  peer=null; G=newGameState();
-  G.cardArt=deckCharImages(); CARDART=Object.assign({},G.cardArt); applyCardStyle(G.rules.style);
-  G.players.push({id:"p0",name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
-  enterLobby(); // host lobby; they can add AI and start
+function startSolo(){ if(!grabName())return; initAudio();
+  modal(`<h2>🌵 Play solo</h2><p>Pick your game vs the computer:</p>
+    <div class="opts">
+      <button onclick="beginSolo(1,true)">🧑 You vs 1 computer</button>
+      <button onclick="beginSolo(2,true)">🧑 You vs 2 computers</button>
+      <button onclick="beginSolo(3,true)">🧑 You vs 3 computers</button>
+      <button onclick="beginSolo(5,true)">🧑 You vs 5 computers</button>
+      <button onclick="beginSolo(4,false)">🍿 Watch the computers play (AI only)</button>
+      <button onclick="hostCreate2()">⚙️ More options / play with friends</button>
+      <button style="background:#eee" onclick="closeModal()">Cancel</button>
+    </div>`);
 }
+function hostCreate2(){ closeModal(); hostCreate(); } // create a room + open the full lobby
+function beginSolo(aiCount, humanPlays){
+  closeModal(); initAudio();
+  ME.role="host"; ME.id="p0"; ROOM="SOLO"; peer=null; G=newGameState();
+  G.cardArt=deckCharImages(); CARDART=Object.assign({},G.cardArt); applyCardStyle(G.rules.style);
+  if(humanPlays) G.players.push({id:"p0",clientId:ME.clientId,name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
+  G.rules.aiCount=aiCount; G.rules.goalSel="auto";
+  doStart(false); // adds the AI players, deals, and begins immediately
+}
+function grabName(){ const n=$("nameInput").value.trim()||("Player"); ME.name=n.slice(0,14); localStorage.setItem("cactus_name",ME.name); return true; }
 function grabName(){ const n=$("nameInput").value.trim()||("Player"); ME.name=n.slice(0,14); localStorage.setItem("cactus_name",ME.name); return true; }
 
 // ---- screen transitions ----
