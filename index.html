@@ -470,7 +470,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.5</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.6</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -509,7 +509,10 @@
       <div class="code" id="lobbyCode">----</div>
     </div>
     <div style="flex:1"></div>
-    <button class="btn sm alt" id="copyLinkBtn">📋 Copy share link</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn sm" id="shareBtn">📤 Share invite</button>
+      <button class="btn sm alt" id="copyLinkBtn">📋 Copy link</button>
+    </div>
   </div>
   <div class="lobby-players" id="lobbyPlayers"></div>
   <div id="settingsPanel" class="panel"></div>
@@ -1925,8 +1928,15 @@ function refreshRejoin(){ const el=$("rejoinBox"); if(!el)return; let lg=null; t
   else { el.classList.add("hidden"); el.innerHTML=""; } }
 function rejoinLast(){ let lg=null; try{ lg=JSON.parse(localStorage.getItem("cactus_lastGame")||"null"); }catch(e){} if(!lg)return; initAudio(); if(!grabName())return; clientJoin(lg.room, !!lg.spectator); }
 
-function copyShare(){ if(ROOM==="SOLO")return; const url=location.origin+location.pathname+"#"+ROOM;
-  navigator.clipboard&&navigator.clipboard.writeText(url).then(()=>toast("Share link copied!"),()=>toast(url)); }
+function shareUrl(){ return location.origin+location.pathname+"#"+ROOM; }
+function copyShare(){ if(ROOM==="SOLO")return; const url=shareUrl();
+  if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>toast("Share link copied!"),()=>toast(url)); }
+  else toast(url); }
+// Native share sheet (phone) — lets Casey send the invite straight to friends.
+function shareLink(){ if(ROOM==="SOLO")return; const url=shareUrl();
+  const data={title:"What's The Point? 🌵", text:"Join my Cactus Card Game! Tap to play — room "+ROOM, url:url};
+  if(navigator.share){ navigator.share(data).catch(()=>{}); }
+  else copyShare(); }
 
 // ---- reactions bar setup ----
 const REACTS=["👍","😂","😮","🌵","💎","🛑","🔥","😎","😭","🎉"];
@@ -1972,9 +1982,13 @@ function boot(){
   if(!REDUCE){["🌵","🌵","🌵","🌷","🌶️","🪨"].forEach((e,i)=>{ const c=document.createElement("div"); c.className="floatcactus"; c.textContent=e;
     c.style.left=(8+i*16)+"%"; c.style.fontSize=(24+Math.random()*26)+"px"; c.style.animationDuration=(11+i*3)+"s"; c.style.animationDelay=(-i*3)+"s"; document.body.appendChild(c); });}
   $("nameInput").value=ME.name; renderAvatars(); buildReactBar(); refreshRejoin();
-  // hash auto-join
+  // hash auto-join: opening a share link drops you straight into that game
   const h=(location.hash||"").replace("#","").trim().toUpperCase();
-  if(h&&h.length>=3&&h.length<=5){$("codeInput").value=h;}
+  if(h&&h.length>=3&&h.length<=5){
+    $("codeInput").value=h;
+    if((ME.name||"").trim()){ setStatus("Joining room "+h+"…"); clientJoin(h,false); }
+    else { try{$("nameInput").focus();}catch(_){} setStatus("Enter your name, then tap Join — room "+h+" is ready."); }
+  }
   $("createBtn").onclick=()=>{initAudio();if(!grabName())return;hostCreate();};
   $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c,false);};
   $("spectateBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter the room code of the game to watch.");$("codeInput").focus();return;}clientJoin(c,true);};
@@ -1988,6 +2002,7 @@ function boot(){
   $("chatText").addEventListener("keydown",e=>{if(e.key==="Enter")sendChat();});
   $("leaveBtn").onclick=()=>{ if(confirm("Leave the game?"))goHome(); };
   $("rcChip").onclick=copyShare; $("copyLinkBtn").onclick=copyShare;
+  $("shareBtn").onclick=shareLink; if(!navigator.share)$("shareBtn").classList.add("hidden");
   $("artFile").addEventListener("change",onArtFile);
   document.body.addEventListener("touchstart",initAudio,{once:true});
   document.body.addEventListener("click",initAudio,{once:true});
