@@ -185,12 +185,14 @@
   .discardwrap{width:96px;height:134px;display:flex;align-items:center;justify-content:center;}
   .discardwrap .card{transform:scale(.82);cursor:default;animation:none;box-shadow:0 4px 10px rgba(0,0,0,.4),inset 0 0 0 2px rgba(255,255,255,.5);}
   .discardwrap .card:hover{transform:scale(.82);}
-  #centerZone{max-width:680px;margin:14px auto 0;}
-  #log{background:rgba(8,24,16,.5);border:1px solid rgba(255,255,255,.12);border-radius:10px;padding:6px 12px;max-height:62px;overflow-y:auto;
-    font-size:13px;width:100%;margin:0 auto;color:#dff3e4;backdrop-filter:blur(4px);box-shadow:inset 0 0 14px rgba(0,0,0,.3);text-align:center;transition:opacity .2s;}
-  #log.dim{opacity:.25;}
-  #log .e{margin:1px 0;line-height:1.3;}
-  #log .e b{color:#ffe08a;} #log .e.big{font-weight:bold;color:#ffd24d;}
+  #centerZone{max-width:760px;margin:14px auto 0;min-height:44px;}
+  #log{background:none;border:none;box-shadow:none;backdrop-filter:none;width:100%;margin:0 auto;text-align:center;transition:opacity .2s;
+    font-family:'Fredoka',sans-serif;font-weight:700;color:#fff;font-size:clamp(18px,4.6vw,30px);text-shadow:0 2px 7px rgba(0,0,0,.75),0 0 18px rgba(0,0,0,.4);line-height:1.15;}
+  #log.dim{opacity:.2;}
+  #log .e{margin:0;}
+  #log .e b{color:#fff;} #log .e.big{color:#fff;}
+  #log .e.show{animation:logpop .35s cubic-bezier(.2,1.4,.4,1);}
+  @keyframes logpop{0%{transform:scale(.85);opacity:0;}100%{transform:scale(1);opacity:1;}}
   /* inline prompt zone (under the piles) */
   #promptZone{background:linear-gradient(180deg,rgba(20,55,36,.96),rgba(13,40,27,.96));border:2px solid var(--gold);border-radius:16px;
     padding:14px 16px;margin:0 auto 8px;box-shadow:0 8px 26px rgba(0,0,0,.45);text-align:center;animation:pzin .25s ease;}
@@ -425,14 +427,12 @@
     <div class="or">— or —</div>
     <input id="codeInput" class="field" maxlength="5" placeholder="Room code" style="text-transform:uppercase;letter-spacing:4px;text-align:center;">
     <button class="btn alt" id="joinBtn">Join game</button>
-    <label style="display:flex;align-items:center;gap:7px;justify-content:center;font-size:13px;margin-top:4px;cursor:pointer;opacity:.85;">
-      <input type="checkbox" id="spectateChk" style="width:18px;height:18px;"> 👁 Just watch (spectate only)
-    </label>
+    <button class="btn grey" id="spectateBtn" style="margin-top:4px">👁 Spectate a game (watch only)</button>
   </div>
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.8</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.9</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -802,7 +802,7 @@ function dispatchResponse(reqId,value){ if(ME.role==="host"){ const r=G._prompts
 // ---------------- Game state (host) ----------------
 function newGameState(){ return {players:[],spectators:[],draw:[],discard:[],pointPile:POINT_CARDS_TOTAL,cur:0,goal:10,
   over:false,winner:null,started:false,log:[],chat:[],hostId:"p0",lastWinnerId:null,cardArt:{},lastAction:null,_actId:0,bigEvent:null,_bigId:0,
-  fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,reqEvent:null,_reqEvId:0,
+  fanfare:null,_fanId:0,comboBy:null,comboN:0,sessionWins:{},grandChamp:false,reqEvent:null,_reqEvId:0,takeEvent:null,_takeId:0,
   rules:{goalSel:"auto",hand:5,aiCount:0,wild:3,decks:1,style:"classic",bg:"green",stopRule:"5"},
   _pid:0,_sid:0,_uid:1,_prompts:{},_reqId:1,_activeResolver:null,_actionQueue:[]}; }
 function scored(p){ if(G.comboBy===p.id) G.comboN++; else { G.comboBy=p.id; G.comboN=1; } return G.comboN; }
@@ -827,7 +827,7 @@ function doStart(isRematch){
   const n=G.players.length;
   G.goal = goalSel==="auto"?goalFor(n):parseInt(goalSel);
   for(let rr=0;rr<hand;rr++)for(const p of G.players)p.hand.push(G.draw.pop());
-  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.reqEvent=null; G.comboBy=null; G.comboN=0;
+  G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.reqEvent=null; G.takeEvent=null; G.comboBy=null; G.comboN=0;
   // Auto Grand Champ: if 2+ players are tied at the top with 3+ session wins each
   const wc=G.players.map(p=>G.sessionWins[p.id]||0); const mx=Math.max(0,...wc);
   const tiedTop=G.players.filter(p=>(G.sessionWins[p.id]||0)===mx).length;
@@ -864,7 +864,7 @@ function buildView(forId){
     drawCount:G.draw.length, pointPile:G.pointPile,
     discardTop:G.discard.length?G.discard[G.discard.length-1].t:null,
     activeId:G.over?null:curP().id, winner:G.winner, log:G.log.slice(-50),
-    style:G.rules.style, bg:G.rules.bg, stopRule:G.rules.stopRule, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp, reqEvent:G.reqEvent,
+    style:G.rules.style, bg:G.rules.bg, stopRule:G.rules.stopRule, controllers:controllerIds(), lastAction:G.lastAction, bigEvent:G.bigEvent, fanfare:G.fanfare, grandChamp:G.grandChamp, reqEvent:G.reqEvent, takeEvent:G.takeEvent,
   };
 }
 function lobbyView(){ return {room:ROOM, rules:G.rules, style:G.rules.style, controllers:controllerIds(), cardArtSlots:Object.keys(G.cardArt),
@@ -967,7 +967,8 @@ async function resolveAction(actor,t,opt){
       if(negated){pushLog(`${esc(actor.name)}'s See & Steal was blocked 🛑`,true);broadcast();return false;}
       const tgt=pById(opt.target); if(tgt&&tgt.hand.length){
         const pick=await decide(actor.id,{kind:"pickHand",targetName:tgt.name,cards:tgt.hand.map(c=>({id:c.id,t:c.t}))},()=>aiPickFromHand(tgt,actor));
-        const c=tgt.hand.find(x=>x.id===pick)||null; if(c){moveCard(tgt,actor,c);sfx("steal");pushLog(`${esc(actor.name)} peeked at ${esc(tgt.name)} and took a card 👀`,true);}
+        const c=tgt.hand.find(x=>x.id===pick)||null; if(c){moveCard(tgt,actor,c);sfx("steal");pushLog(`${esc(actor.name)} peeked at ${esc(tgt.name)} and took a card 👀`,true);
+          G.takeEvent={id:++G._takeId, fromId:tgt.id, toId:actor.id};}
       } broadcast(); return false; }
     case "stealcard":{
       if(negated){pushLog(`${esc(actor.name)}'s Steal a Card was blocked 🛑`,true);broadcast();return false;}
@@ -977,6 +978,7 @@ async function resolveAction(actor,t,opt){
         const c=tgt.hand.find(x=>x.id===pick)||rand(tgt.hand);
         moveCard(tgt,actor,c); sfx("steal");
         pushLog(`${esc(actor.name)} took a card from ${esc(tgt.name)} 🤏`,true);
+        G.takeEvent={id:++G._takeId, fromId:tgt.id, toId:actor.id};
       }
       broadcast(); return false; }
     case "request":{
@@ -1418,6 +1420,15 @@ function flyReqToSeat(ev){ // the given card flies into the requester's seat/han
   fly.animate([{transform:"translate(0,0) scale(1.2)",opacity:1},{transform:`translate(${dx}px,${dy}px) scale(.5)`,opacity:.6}],{duration:480,easing:"cubic-bezier(.3,.7,.35,1)",fill:"forwards"});
   sfx("steal"); setTimeout(()=>fly.remove(),520);
 }
+function seatRect(id){ const you=lastView&&lastView.players.find(p=>p.isYou); const el=(you&&id===you.id)?$("youbar"):document.querySelector('.opp[data-id="'+id+'"]'); return rectOf(el); }
+function animateTake(ev){ // a FACE-DOWN card flies from the target into the stealer's hand (everyone sees, nobody sees the card)
+  if(REDUCE)return; const fr=seatRect(ev.fromId), tr=seatRect(ev.toId); if(!fr||!tr)return;
+  const fly=document.createElement("div"); fly.className="flydeck";
+  const sx=fr.left+fr.width/2-22, sy=fr.top+fr.height/2-31; fly.style.left=sx+"px"; fly.style.top=sy+"px"; document.body.appendChild(fly);
+  const dx=(tr.left+tr.width/2-22)-sx, dy=(tr.top+tr.height/2-31)-sy;
+  fly.animate([{transform:"scale(1.35) rotate(0)",opacity:1},{transform:`translate(${dx*0.5}px,${dy*0.5-24}px) scale(1) rotate(${(Math.random()*30-15)|0}deg)`,opacity:1,offset:.5},{transform:`translate(${dx}px,${dy}px) scale(.7)`,opacity:.85}],{duration:620,easing:"cubic-bezier(.3,.65,.3,1)",fill:"forwards"});
+  sfx("steal"); buzz(40); setTimeout(()=>fly.remove(),660);
+}
 
 // ---- game render (view-driven) ----
 let prevPoints={}, prevSnap=null, winShown=false;
@@ -1446,8 +1457,9 @@ function renderGameFor(view){
   if(view.discardTop){ds.outerHTML=`<div id="discardSlot" class="discardwrap">${cardHTML({id:-1,t:view.discardTop})}</div>`;}
   else ds.outerHTML='<div id="discardSlot" class="discardslot">discard</div>';
   // log
-  const notable=view.log.filter(e=>e.big).slice(-4);
-  const lg=$("log");lg.innerHTML=(notable.length?notable:view.log.slice(-3)).map(e=>`<div class="e${e.big?' big':''}">${e.html}</div>`).join("")||'<div class="e" style="opacity:.5">No moves yet…</div>';lg.scrollTop=lg.scrollHeight;
+  const notable=view.log.filter(e=>e.big); const cur=notable[notable.length-1];
+  const lg=$("log"); const curHtml=cur?cur.html:"";
+  if(curHtml!==lg.dataset.cur){ lg.dataset.cur=curHtml; lg.innerHTML=curHtml?`<div class="e big show">${curHtml}</div>`:""; }
   // you
   const you=view.players.find(p=>p.isYou);
   $("youbar").classList.toggle("youturn", !!(you&&you.isActive&&view.phase==="playing"));
@@ -1466,11 +1478,12 @@ function renderGameFor(view){
     if(bigNew) showSlam(view.bigEvent);
     if(view.fanfare && view.fanfare.id!==prevSnap.fanId) setFanfare(view.fanfare); // 3-of-a-kind celebration
     if(view.reqEvent && view.reqEvent.id!==prevSnap.reqId) animateRequest(view.reqEvent); // request-a-card reveal
+    if(view.takeEvent && view.takeEvent.id!==prevSnap.takeId) animateTake(view.takeEvent); // steal/see — card flies to stealer (face-down)
     if(view.discardTop && view.discardTop!==prevSnap.discardTop){
       const la=view.lastAction; const laNew=la&&la.id!==prevSnap.lastActionId; const mine=la&&you&&la.actorId===you.id;
-      const isReq=la&&la.t==="request";
+      const quiet=la&&(la.t==="request"||la.t==="stealcard"||la.t==="seesteal"); // these have their own animations
       if(bigNew){ /* slam shows the card big; skip extra card-to-discard motion */ }
-      else if(laNew&&!mine&&!isReq) showPlayedCard(la); else flyToDiscard(view.discardTop);
+      else if(laNew&&!mine&&!quiet) showPlayedCard(la); else flyToDiscard(view.discardTop);
     }
     // cards drawn from the deck -> slide from the draw pile to that player
     const drawDrop = (prevSnap.drawCount||0) - view.drawCount;
@@ -1483,7 +1496,7 @@ function renderGameFor(view){
   // winner
   if(view.phase==="over"&&view.winner&&!winShown){ winShown=true; showWinner(view); }
   prevPoints={}; view.players.forEach(p=>prevPoints[p.id]=p.points);
-  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), fanId:(view.fanfare?view.fanfare.id:null), reqId:(view.reqEvent?view.reqEvent.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
+  prevSnap={discardTop:view.discardTop, activeId:view.activeId, drawCount:view.drawCount, points:{}, handCounts:{}, lastActionId:(view.lastAction?view.lastAction.id:null), bigId:(view.bigEvent?view.bigEvent.id:null), fanId:(view.fanfare?view.fanfare.id:null), reqId:(view.reqEvent?view.reqEvent.id:null), takeId:(view.takeEvent?view.takeEvent.id:null), lastLog:(view.log[view.log.length-1]||{}).html};
   view.players.forEach(p=>{prevSnap.points[p.id]=p.points; prevSnap.handCounts[p.id]=p.handCount;});
   if(view.phase==="over") prevSnap=null; // reset for next game
 }
@@ -1783,7 +1796,8 @@ function boot(){
   const h=(location.hash||"").replace("#","").trim().toUpperCase();
   if(h&&h.length>=3&&h.length<=5){$("codeInput").value=h;}
   $("createBtn").onclick=()=>{initAudio();if(!grabName())return;hostCreate();};
-  $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c,$("spectateChk").checked);};
+  $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c,false);};
+  $("spectateBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter the room code of the game to watch.");$("codeInput").focus();return;}clientJoin(c,true);};
   $("soloBtn").onclick=startSolo;
   $("designBtn").onclick=showDesigner; $("dzBack").onclick=closeDesigner;
   $("dzReset").onclick=()=>{ if(confirm("Reset ALL card designs to default?")){ DECK={}; saveDeck(); renderDesignerGrid(); } };
