@@ -77,6 +77,23 @@
   .card-deco .c:nth-child(1){transform:rotate(-9deg);} .card-deco .c:nth-child(3){transform:rotate(9deg);}
   .link{color:var(--green-d);font-weight:bold;cursor:pointer;text-decoration:underline;background:none;border:none;font-size:14px;}
   .panel{background:var(--panel);border:2px solid var(--panelbd);border-radius:16px;padding:14px;margin:10px 0;}
+  /* ---------- CARD DESIGNER ---------- */
+  #designer{max-width:760px;margin:0 auto;padding:12px 14px 60px;}
+  .dz-head{display:flex;align-items:center;justify-content:space-between;gap:8px;position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:3;}
+  .dz-title{font-family:'Luckiest Guy',cursive;font-size:24px;color:var(--green-d);}
+  .dz-note{font-size:13px;opacity:.75;text-align:center;margin:4px 0 14px;}
+  #designerGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px;justify-items:center;}
+  .dz-cell{cursor:pointer;transition:transform .12s;text-align:center;}
+  .dz-cell:hover{transform:translateY(-4px);}
+  .dz-cell .editlbl{font-size:11px;font-weight:bold;color:var(--green-d);margin-top:4px;}
+  .dz-preview{display:flex;justify-content:center;margin:6px 0 12px;}
+  .emoji-grid{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin:6px 0;max-height:140px;overflow-y:auto;}
+  .emoji-grid button{font-size:22px;width:40px;height:40px;border-radius:10px;border:2px solid var(--panelbd);background:var(--paper);cursor:pointer;}
+  .emoji-grid button.sel{border-color:var(--gold);background:var(--green-vl);}
+  .color-grid{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0;}
+  .color-grid button{width:30px;height:30px;border-radius:50%;border:3px solid transparent;cursor:pointer;}
+  .color-grid button.sel{border-color:var(--gold);transform:scale(1.12);}
+  .dz-section{font-weight:bold;font-size:13px;margin:10px 0 2px;}
   /* ---------- TOP BAR ---------- */
   #topbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;
     background:var(--green-d);color:#fff;position:sticky;top:0;z-index:8;flex-wrap:wrap;}
@@ -380,9 +397,21 @@
     </label>
   </div>
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
+  <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.2</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.3</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
+</div>
+
+<!-- CARD DESIGNER -->
+<div id="designer" class="hidden">
+  <div class="dz-head">
+    <button class="btn grey sm" id="dzBack">← Back</button>
+    <div class="dz-title">🎨 Card Designer</div>
+    <button class="btn red sm" id="dzReset">Reset all</button>
+  </div>
+  <p class="dz-note">Tap a card to customise its art, colour and name. Saved on this device and used in your games. Character images you design also show to others when you host.</p>
+  <div id="designerGrid"></div>
 </div>
 
 <!-- TOP BAR (game/lobby) -->
@@ -501,8 +530,28 @@ const STYLES={
 };
 let ART={charlie:"🌵",spike:"🌵",walter:"🌵",wild:"🌈"}; // current style's emoji art
 let CURSTYLE="classic";
-let CARDART={};   // custom uploaded art per character: {charlie:dataURL,...} (shared in-game)
-let SAVEDART={};  // this device's saved custom art (persists)
+let CARDART={};   // host-shared character images received in-game: {charlie:dataURL,...}
+let SAVEDART={};  // (legacy) this device's saved custom art
+let DECK={};      // Card Designer: per-type {art(emoji|dataURL), color(hex), label} — personal to this device
+const ALL_CARD_TYPES=["charlie","spike","walter","wild","freepoint","stealpoint","draw3","seesteal","stealcard","request","swap","stop"];
+function isImgSrc(s){ return typeof s==="string" && /^(data:|https?:)/.test(s); }
+function deckOf(t){ return (DECK&&DECK[t])||{}; }
+function cardVisual(t){
+  const d=DEF[t], dk=deckOf(t);
+  const label = dk.label || d.name;
+  const color = dk.color || d.color;
+  let artVal = dk.art;
+  if(!artVal && isChar(t)) artVal = CARDART[t];      // host-shared image
+  if(!artVal && isChar(t)) artVal = ART[t];          // style emoji
+  if(!artVal) artVal = d.art;                        // default
+  const artHtml = isImgSrc(artVal) ? `<img src="${artVal}">` : artVal;
+  const cornerGlyph = (dk.art && !isImgSrc(dk.art)) ? dk.art : (isChar(t) ? (ART[t]||d.art) : d.art);
+  return {label, color, artHtml, cornerGlyph};
+}
+function loadDeck(){ try{ DECK=JSON.parse(localStorage.getItem("cactus_deck")||"null"); }catch(e){ DECK=null; }
+  if(!DECK){ DECK={}; try{ const old=JSON.parse(localStorage.getItem("cactus_cardart")||"{}"); for(const k in old) DECK[k]={art:old[k]}; }catch(e){} saveDeck(); } }
+function saveDeck(){ try{ localStorage.setItem("cactus_deck",JSON.stringify(DECK)); }catch(e){} }
+function deckCharImages(){ const o={}; for(const t of ["charlie","spike","walter","wild"]){ const a=DECK[t]&&DECK[t].art; if(isImgSrc(a))o[t]=a; } return o; }
 function applyCardStyle(id){ const s=STYLES[id]||STYLES.classic; const r=document.documentElement.style;
   r.setProperty('--cardpaper',s.paper); r.setProperty('--cardink',s.ink); r.setProperty('--cardborder',s.border);
   r.setProperty('--cardback',s.back); r.setProperty('--cardbackcolor',s.backColor); ART=s.art; CURSTYLE=id; }
@@ -567,7 +616,7 @@ function hostCreate(){
   peer.on("open",()=>{
     setStatus(""); hideConnecting();
     G=newGameState();
-    G.cardArt=Object.assign({},SAVEDART); CARDART=Object.assign({},SAVEDART); applyCardStyle(G.rules.style);
+    G.cardArt=deckCharImages(); CARDART=Object.assign({},G.cardArt); applyCardStyle(G.rules.style);
     G.players.push({id:"p0",clientId:ME.clientId,name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
     enterLobby();
   });
@@ -974,7 +1023,7 @@ function renderAvatars(){const w=$("avPick");w.innerHTML="";AVATARS.forEach(a=>{
 
 function startSolo(){ if(!grabName())return; initAudio(); ME.role="host";ME.id="p0";ROOM="SOLO";
   peer=null; G=newGameState();
-  G.cardArt=Object.assign({},SAVEDART); CARDART=Object.assign({},SAVEDART); applyCardStyle(G.rules.style);
+  G.cardArt=deckCharImages(); CARDART=Object.assign({},G.cardArt); applyCardStyle(G.rules.style);
   G.players.push({id:"p0",name:ME.name,avatar:ME.avatar,local:true,isAI:false,connected:true,hand:[],points:0});
   enterLobby(); // host lobby; they can add AI and start
 }
@@ -1080,9 +1129,8 @@ function buildSettingsPanel(rules, amCtl, view){
       <div style="font-weight:bold;font-size:13px">🎴 Card style</div>
       <div class="style-swatches" id="styleSwatches"></div>
     </div>
-    <div class="art-section" style="margin-top:22px">
-      <div style="font-weight:bold;font-size:13px">🖼️ Custom character art ${amCtl?'<span style="font-size:11px;opacity:.7">— tap a card to upload (saves to your device)</span>':''}</div>
-      <div class="art-slots" id="artSlots"></div>
+    <div class="art-section" style="margin-top:18px">
+      <button class="btn alt" id="openDesigner2" style="font-size:14px">🎨 Design your own cards</button>
     </div>
     ${amCtl?`<button class="btn" id="startBtn" style="margin-top:8px">🌵 Start game</button>`:`<div class="lock-note" style="margin-top:8px">Waiting for <b>${esc(ctlNames)}</b> to start…</div>`}
   `;
@@ -1094,14 +1142,7 @@ function buildSettingsPanel(rules, amCtl, view){
     el.innerHTML=`<span style="filter:drop-shadow(0 1px 1px #000)">${s.sw}</span><span class="lab">${s.name}</span>`;
     if(amCtl) el.onclick=()=>{ updateRules({style:id}); };
     sw.appendChild(el);});
-  // art slots
-  const slots=$("artSlots");
-  ["charlie","spike","walter","wild"].forEach(t=>{
-    const el=document.createElement("div");el.className="art-slot";
-    const has=CARDART[t];
-    el.innerHTML=`<div class="thumb" data-slot="${t}">${has?`<img src="${has}">`:(ART[t]||DEF[t].art)}${has&&amCtl?'<span class="x" data-x="'+t+'">✕</span>':''}</div><span>${DEF[t].name}</span>`;
-    if(amCtl){ const thumb=el.querySelector(".thumb"); thumb.onclick=(e)=>{ if(e.target.dataset.x){ removeArt(e.target.dataset.x); return; } pendingArtSlot=t; $("artFile").click(); }; }
-    slots.appendChild(el);});
+  const od=$("openDesigner2"); if(od) od.onclick=()=>{ hide("lobby"); showDesigner(); $("dzBack").onclick=()=>{ hide("designer"); show("lobby"); }; };
   // wire rule selects
   if(amCtl){
     ["ruleGoal","ruleHand","ruleAI","ruleDecks","ruleWild"].forEach(id=>{ const el=$(id); if(el) el.onchange=()=>gatherAndSendRules(); });
@@ -1307,16 +1348,15 @@ function renderGameFor(view){
 }
 function tokens(n,id){let s="";const pop=(prevPoints[id]!=null&&n>prevPoints[id]);for(let i=0;i<Math.min(n,15);i++){const isNew=pop&&i>=prevPoints[id];s+=`<span class="token${isNew?' pop':''}"></span>`;}return s;}
 function cardHTML(c,opt={}){const d=DEF[c.t];const sel=opt.sel?" sel":"";const idA=opt.id?`id="${opt.id}"`:"";const clk=opt.clickable?`onclick="onCardClick(${c.id},event)"`:"";
+  const v=cardVisual(c.t); const nm=esc(v.label);
   let badge="";if(isChar(c.t))badge=`<div class="badge">${c.t==="wild"?"★":setPoints(c.t)}</div>`;
   const icon=d.icon?`<span>${d.icon}</span>`:"";
-  const cornerGlyph = isChar(c.t)?(ART[c.t]||d.art):d.art;
-  let art=d.art; if(isChar(c.t)){ art = CARDART[c.t]?`<img src="${CARDART[c.t]}">`:(ART[c.t]||d.art); }
-  const grad=`linear-gradient(180deg,${d.color},${shade(d.color,-22)})`;
+  const grad=`linear-gradient(180deg,${v.color},${shade(v.color,-22)})`;
   return `<div class="card${sel}" ${idA} ${clk}><div class="gloss"></div>`+
-    `<div class="top" style="background:${grad}"><span>${d.name}</span>${icon}</div>`+
-    `<div class="corner tl">${cornerGlyph}</div>`+
-    `<div class="art">${art}</div><div class="nm">${d.name}</div><div class="desc">${d.desc}</div>`+
-    `<div class="corner br">${cornerGlyph}</div>${badge}</div>`;}
+    `<div class="top" style="background:${grad}"><span>${nm}</span>${icon}</div>`+
+    `<div class="corner tl">${v.cornerGlyph}</div>`+
+    `<div class="art">${v.artHtml}</div><div class="nm">${nm}</div><div class="desc">${d.desc}</div>`+
+    `<div class="corner br">${v.cornerGlyph}</div>${badge}</div>`;}
 function shade(hex,pct){ hex=hex.replace('#',''); if(hex.length===3)hex=hex.split('').map(x=>x+x).join('');
   let r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
   const f=v=>Math.max(0,Math.min(255,Math.round(v+(pct/100)*255)));
@@ -1329,6 +1369,7 @@ function resizeImage(file,max,cb){ const img=new Image(); const fr=new FileReade
     const cv=document.createElement("canvas");cv.width=w;cv.height=h;cv.getContext("2d").drawImage(img,0,0,w,h);
     cb(cv.toDataURL("image/png")); }; img.src=fr.result; }; fr.readAsDataURL(file); }
 function onArtFile(e){ const f=e.target.files&&e.target.files[0]; e.target.value=""; if(!f||!pendingArtSlot)return; const slot=pendingArtSlot;pendingArtSlot=null;
+  if(slot==="__dz"){ resizeImage(f,260,(dataURL)=>{ setDeck(dzEditing,"art",dataURL); openCardEditor(dzEditing); }); return; }
   resizeImage(f,220,(dataURL)=>{ setArt(slot,dataURL); }); }
 function setArt(slot,dataURL){
   SAVEDART[slot]=dataURL; saveArt(); // persist on this device
@@ -1530,6 +1571,37 @@ function showHistory(){
   const items=log.slice().reverse().map(e=>`<div class="histrow${e.big?' big':''}">${e.html}</div>`).join("")||"<i>No activity yet.</i>";
   modal(`<h2>📜 Notifications</h2><div class="histbox">${items}</div><div class="opts"><button style="background:#eee" onclick="closeModal()">Close</button></div>`);
 }
+// ---- Card Designer ----
+const DZ_EMOJIS=["🌵","🌴","🌲","🌷","🌻","🌹","🍀","🌶️","🍐","🍎","🦂","🐍","🦎","🐢","🦖","🐲","🐉","🦅","🐺","🦊","🐰","🦄","⭐","🌈","💎","🔥","❤️","⚡","🛑","👽","🤖","🎯","🎲","👑","🏆","🌞","🌙","🪨","🏜️","🤠","💀","🌊","🍄","🎃"];
+const DZ_COLORS=["#4caf50","#2e7d32","#1b5e20","#66bb6a","#8bc34a","#f4b400","#fb8c00","#ff7043","#e53935","#d32f2f","#ec407a","#ab47bc","#8e5bd0","#29b6f6","#0288d1","#00897b","#5d4037","#455a64","#212121","#c0ca33"];
+let dzEditing=null;
+function showDesigner(){ initAudio(); loadDeck(); hide("home"); hide("topbar"); show("designer"); document.body.classList.remove("home"); $("dzBack").onclick=closeDesigner; renderDesignerGrid(); }
+function closeDesigner(){ hide("designer"); show("home"); document.body.classList.add("home"); }
+function renderDesignerGrid(){ const g=$("designerGrid"); if(!g)return; g.innerHTML="";
+  ALL_CARD_TYPES.forEach(t=>{ const cell=document.createElement("div"); cell.className="dz-cell"; cell.onclick=()=>openCardEditor(t);
+    cell.innerHTML=cardHTML({id:-50,t})+`<div class="editlbl">✏️ Edit</div>`; g.appendChild(cell); }); }
+function openCardEditor(t){ dzEditing=t; const d=DEF[t]; const dk=deckOf(t);
+  const emojiBtns=DZ_EMOJIS.map(e=>`<button class="${dk.art===e?'sel':''}" onclick="dzSetArt('${e}')">${e}</button>`).join("");
+  const colorBtns=DZ_COLORS.map(c=>`<button class="${(dk.color||d.color)===c?'sel':''}" style="background:${c}" onclick="dzSetColor('${c}')"></button>`).join("");
+  modal(`<h2>Design this card</h2>
+    <div class="dz-preview" id="dzPreview">${cardHTML({id:-51,t})}</div>
+    <div class="dz-section">Name</div>
+    <input id="dzName" class="field" maxlength="16" value="${esc(dk.label||d.name)}" placeholder="${esc(d.name)}">
+    <div class="dz-section">Art — pick an emoji or upload</div>
+    <div class="emoji-grid">${emojiBtns}</div>
+    <div class="pbtns" style="margin:6px 0"><button class="btn sm alt" onclick="dzUpload()">📷 Upload image</button><button class="btn sm grey" onclick="dzSetArt('')">Default art</button></div>
+    <div class="dz-section">Accent colour</div>
+    <div class="color-grid">${colorBtns}<button style="background:repeating-linear-gradient(45deg,#ccc 0 6px,#fff 6px 12px)" onclick="dzSetColor('')" title="Default"></button></div>
+    <div class="opts" style="margin-top:14px"><button onclick="closeModal()">Done</button><button style="background:#eee" onclick="dzResetCard()">Reset this card</button></div>`);
+  const nm=$("dzName"); if(nm) nm.oninput=()=>{ const v=nm.value.trim(); if(v&&v!==d.name) setDeck(t,"label",v); else clearDeck(t,"label"); dzLivePreview(); };
+}
+function dzLivePreview(){ const p=$("dzPreview"); if(p&&dzEditing) p.innerHTML=cardHTML({id:-51,t:dzEditing}); renderDesignerGrid(); }
+function setDeck(t,key,val){ DECK[t]=DECK[t]||{}; DECK[t][key]=val; saveDeck(); }
+function clearDeck(t,key){ if(DECK[t]){ delete DECK[t][key]; if(!Object.keys(DECK[t]).length) delete DECK[t]; saveDeck(); } }
+function dzSetArt(e){ if(e) setDeck(dzEditing,"art",e); else clearDeck(dzEditing,"art"); openCardEditor(dzEditing); }
+function dzSetColor(c){ if(c) setDeck(dzEditing,"color",c); else clearDeck(dzEditing,"color"); openCardEditor(dzEditing); }
+function dzResetCard(){ delete DECK[dzEditing]; saveDeck(); openCardEditor(dzEditing); }
+function dzUpload(){ pendingArtSlot="__dz"; $("artFile").click(); }
 function goHome(){ _leaving=true; try{if(peer)peer.destroy();}catch(e){} peer=null;clientConn=null;hostConns={};G=null;ROOM=null;ME.role=null;sel=[];
   closeModal();hidePrompt();stopCountdown=null;chatOpen=false;$("chatpanel").classList.remove("on");hideConnecting();
   hide("topbar");hide("lobby");hide("game");hide("youbar");show("home");$("chatlog").innerHTML="";setStatus("");
@@ -1554,7 +1626,7 @@ function showRules(){ modal(`<h2>How to play 🌵</h2>
 // ---------------- boot / wiring ----------------
 function boot(){
   if(localStorage.getItem("cactus_theme")==="night"){document.body.setAttribute("data-theme","night");$("themeToggle").textContent="☀️ Day mode";}
-  loadArt(); applyCardStyle("classic");
+  loadDeck(); applyCardStyle("classic");
   document.body.classList.add("home");
   // floating background cacti (home only)
   if(!REDUCE){["🌵","🌵","🌵","🌷","🌶️","🪨"].forEach((e,i)=>{ const c=document.createElement("div"); c.className="floatcactus"; c.textContent=e;
@@ -1566,6 +1638,8 @@ function boot(){
   $("createBtn").onclick=()=>{initAudio();if(!grabName())return;hostCreate();};
   $("joinBtn").onclick=()=>{initAudio();if(!grabName())return;const c=$("codeInput").value.trim().toUpperCase();if(!c){setStatus("Enter a room code.");return;}clientJoin(c,$("spectateChk").checked);};
   $("soloBtn").onclick=startSolo;
+  $("designBtn").onclick=showDesigner; $("dzBack").onclick=closeDesigner;
+  $("dzReset").onclick=()=>{ if(confirm("Reset ALL card designs to default?")){ DECK={}; saveDeck(); renderDesignerGrid(); } };
   $("themeToggle").onclick=toggleTheme;
   $("settingsBtn").onclick=()=>{initAudio();showSettings();}; $("historyBtn").onclick=showHistory;
   $("chatBtn").onclick=toggleChat; $("chatClose").onclick=toggleChat; $("chatSend").onclick=sendChat;
