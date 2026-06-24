@@ -482,7 +482,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.10</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.11</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -537,9 +537,9 @@
   <div id="turnIndicator"></div>
   <div id="opponents"></div>
   <div id="center">
-    <div class="pile"><div class="pilecard draw" id="drawPile">🌵<div class="count" id="drawCount">0</div></div><div>Draw</div></div>
+    <div class="pile"><div class="pilecard draw" id="drawPile">🌵</div><div>Draw</div></div>
     <div class="pile"><div id="discardSlot" class="discardslot">discard</div><div>Discard</div></div>
-    <div class="pile"><div class="pilecard point">💎<div class="count" id="pointCount">30</div></div><div>Points</div></div>
+    <div class="pile"><div class="pilecard point">💎</div><div>Points</div></div>
   </div>
   <div id="centerZone">
     <div id="promptZone" class="hidden"></div>
@@ -1607,7 +1607,7 @@ function renderGameFor(view){
   } else if(view.phase==="over" && view.winner){ ti.innerHTML=`<div class="pill"><span class="em">🏆</span>${esc(view.winner.name)} wins!</div>`; }
   else ti.innerHTML="";
   // piles
-  $("drawCount").textContent=view.drawCount; $("pointCount").textContent=view.pointPile;
+  // pile counts intentionally hidden (players shouldn't see how many cards/points remain)
   const ds=$("discardSlot");
   if(view.discardTop){ds.outerHTML=`<div id="discardSlot" class="discardwrap">${cardHTML({id:-1,t:view.discardTop})}</div>`;}
   else ds.outerHTML='<div id="discardSlot" class="discardslot">discard</div>';
