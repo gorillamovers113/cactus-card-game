@@ -470,7 +470,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.4</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.5</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -726,6 +726,14 @@ let ROOM=null;            // room code
 let G=null;               // host authoritative state
 let lastView=null;        // client/host last rendered view
 const PREFIX="wtp-cactus-v2-";
+// ICE servers: STUN finds your address; TURN relays when a direct P2P link can't be
+// made (stricter/carrier NATs) — this is what lets a 3rd/4th player connect reliably.
+const ICE_SERVERS=[
+  {urls:"stun:stun.l.google.com:19302"},
+  {urls:"stun:global.stun.twilio.com:3478"},
+  {urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turn:openrelay.metered.ca:443?transport=tcp"], username:"openrelayproject", credential:"openrelayproject"}
+];
+const PEER_OPTS={debug:1, config:{iceServers:ICE_SERVERS, sdpSemantics:"unified-plan"}};
 
 function setStatus(t){document.getElementById("netStatus").textContent=t||"";}
 function showConnecting(t){ const c=document.getElementById("connecting"); if(!c)return; document.getElementById("ctext").textContent=t||"Connecting…"; c.classList.add("on"); }
@@ -735,7 +743,7 @@ function hideConnecting(){ const c=document.getElementById("connecting"); if(c)c
 function hostCreate(){
   ME.role="host"; ME.id="p0"; _leaving=false;
   ROOM=code4();
-  peer=new Peer(PREFIX+ROOM,{debug:1});
+  peer=new Peer(PREFIX+ROOM,PEER_OPTS);
   showConnecting("Creating your room…");
   peer.on("open",()=>{
     setStatus(""); hideConnecting();
@@ -824,7 +832,7 @@ function clientJoin(roomCode,asSpectator){
   ME.role="client";
   ROOM=roomCode; _leaving=false; _reconnectTries=0; _wasSpectator=!!asSpectator;
   showConnecting("Connecting to room "+roomCode+"…");
-  peer=new Peer({debug:1});
+  peer=new Peer(PEER_OPTS);
   peer.on("open",()=>connectToHost());
   peer.on("error",e=>{ if(e.type==="peer-unavailable"){ if(!tryReconnect())hideConnecting(); setStatus("Couldn't find room "+roomCode+"."); }
     else setStatus("Connection error: "+e.type); });
