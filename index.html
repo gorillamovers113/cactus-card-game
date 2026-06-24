@@ -403,7 +403,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.4</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v3.5</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -966,12 +966,16 @@ function moveCard(from,to,card){const i=from.hand.indexOf(card);if(i>=0){from.ha
 // STOP resolution across players
 async function resolveStops(actor,t,targetId){
   let stops=0,last=actor.id;
+  const humansN=G.players.filter(p=>!p.isAI && p.connected!==false).length;
   while(true){
     let played=false;
     for(const idx of othersFrom(pIndexById(last))){
-      const p=G.players[idx]; if(!p.hand.some(c=>c.t==="stop"))continue;
-      const want=await decide(p.id,{kind:"stop",actorId:actor.id,actorName:actor.name,actionType:t,targetId,stops},()=>aiWantStop(p,actor,t,targetId,stops));
-      if(want){ const sc=p.hand.find(c=>c.t==="stop");p.hand.splice(p.hand.indexOf(sc),1);G.discard.push(sc);stops++;sfx("stop");
+      const p=G.players[idx]; const hasStop=p.hand.some(c=>c.t==="stop"); const human=!p.isAI && p.connected!==false;
+      // Ask if they hold a Stop, OR they're a human in a multi-human game (so opponents can't tell who holds one + you can bluff).
+      const ask = hasStop || (human && humansN>=2);
+      if(!ask) continue;
+      const want=await decide(p.id,{kind:"stop",actorId:actor.id,actorName:actor.name,actionType:t,targetId,stops,hasStop},()=>aiWantStop(p,actor,t,targetId,stops));
+      if(want && hasStop){ const sc=p.hand.find(c=>c.t==="stop");p.hand.splice(p.hand.indexOf(sc),1);G.discard.push(sc);stops++;sfx("stop");
         G.bigEvent={id:++G._bigId, t:"stop", name:p.name, avatar:p.avatar};
         pushLog(stops>1?`🛑 ${esc(p.name)} countered with a Stop!`:`🛑 ${esc(p.name)} used a Stop on ${esc(actor.name)}'s ${DEF[t].name}`,true);broadcast();
         last=p.id;played=true;break; }
@@ -1514,13 +1518,16 @@ function humanStopCountdown(prompt,secs){
     secs=secs||5; const total=secs*10; let remaining=total, done=false;
     const finish=(v)=>{ if(done)return; done=true; clearInterval(iv); stopCountdown=null; hidePrompt();
       if(lastView){const you=lastView.players.find(p=>p.isYou); if(you)renderHand(lastView,you);} res(v); };
-    stopCountdown={resolve:()=>finish(true)};
+    const haveStop = !!(lastView && (lastView.yourHand||[]).some(c=>c.t==="stop"));
+    stopCountdown=haveStop?{resolve:()=>finish(true)}:null; // only tappable if you actually hold a Stop
     const counter = prompt.stops%2===1
       ? `Counter the Stop on <b>${esc(prompt.actorName)}</b>'s ${DEF[prompt.actionType].name}?`
       : `<b>${esc(prompt.actorName)}</b> played ${DEF[prompt.actionType].art} ${DEF[prompt.actionType].name}!`;
-    showPrompt(`<div class="pq">🛑 ${counter}<br>Tap your <b>STOP</b> card to block — <span class="cd">${secs}</span>s</div>`+
+    const action2 = haveStop ? `Tap your <b>STOP</b> card to block — <span class="cd">${secs}</span>s`
+                             : `<span style="opacity:.85">No Stop in hand</span> — <span class="cd">${secs}</span>s`;
+    showPrompt(`<div class="pq">🛑 ${counter}<br>${action2}</div>`+
       `<div class="cdbar"><div class="cdfill" style="width:100%"></div></div>`+
-      `<div class="pbtns"><button class="pbtn no" onclick="__pass()">Let it happen</button></div>`);
+      `<div class="pbtns"><button class="pbtn no" onclick="__pass()">${haveStop?"Let it happen":"OK"}</button></div>`);
     window.__pass=()=>finish(false);
     if(lastView){const you=lastView.players.find(p=>p.isYou); if(you)renderHand(lastView,you);} // highlight + enable the stop card
     sfx("stop");
@@ -1563,8 +1570,11 @@ function pickFromHand(prompt){return new Promise(res=>{
   const q=blind?`🤏 Pick a card to steal from <b>${esc(prompt.targetName)}</b>`:`👀 Take a card from <b>${esc(prompt.targetName)}</b>`;
   const cancel=blind?"":`<div class="pbtns" style="margin-top:10px"><button class="pbtn choice grey" onclick="__take(0)">Take nothing</button></div>`;
   showPrompt(`<div class="pq">${q}</div><div class="pbtns cards">${cards||"<i>(empty)</i>"}</div>${cancel}`);window.__take=id=>{hidePrompt();res(id);};});}
-function humanWantStop(prompt){return new Promise(res=>{const ctx=prompt.stops%2===1?`Counter the Stop on <b>${esc(prompt.actorName)}</b>'s ${DEF[prompt.actionType].name}?`:`<b>${esc(prompt.actorName)}</b> played ${DEF[prompt.actionType].art} ${DEF[prompt.actionType].name}.<br>Use your 🛑 STOP?`;
-  showPrompt(`<div class="pq">${ctx}</div><div class="pbtns"><button class="pbtn yes" onclick="__s(true)">YES</button><button class="pbtn no" onclick="__s(false)">NO</button></div>`);window.__s=v=>{hidePrompt();res(v);};});}
+function humanWantStop(prompt){return new Promise(res=>{
+  const haveStop=!!(lastView && (lastView.yourHand||[]).some(c=>c.t==="stop"));
+  const ctx=prompt.stops%2===1?`Counter the Stop on <b>${esc(prompt.actorName)}</b>'s ${DEF[prompt.actionType].name}?`:`<b>${esc(prompt.actorName)}</b> played ${DEF[prompt.actionType].art} ${DEF[prompt.actionType].name}.${haveStop?"<br>Use your 🛑 STOP?":""}`;
+  const btns=haveStop?`<button class="pbtn yes" onclick="__s(true)">YES</button><button class="pbtn no" onclick="__s(false)">NO</button>`:`<button class="pbtn no" onclick="__s(false)">OK</button>`;
+  showPrompt(`<div class="pq">${ctx}</div><div class="pbtns">${btns}</div>`);window.__s=v=>{hidePrompt();res(v);};});}
 
 function showWinner(view){ const w=view.winner; const me=view.players.find(p=>p.isYou); const iWon=me&&w.id===me.id;
   const stats=loadStats(); const board=Object.entries(stats).sort((a,b)=>b[1].wins-a[1].wins).slice(0,6).map(([n,s])=>`<div style="display:flex;justify-content:space-between"><span>${esc(n)}</span><b>${s.wins}W / ${s.games}G</b></div>`).join("");
