@@ -470,7 +470,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.7</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.8</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -1473,7 +1473,8 @@ function setFanfare(fan){
   shakeScreen(lvl); confettiBurst(1800+combo*1000, 120+combo*110); sfx("fanfare"); buzz([40,30,80,30,120].slice(0,1+combo*2));
   // say the set name out loud
   const nm = fan.setType==="wild" ? "Wild" : cardVisual(fan.setType).label;
-  speak((combo>=2?`Combo ${combo}! `:"") + "Three " + nm + (/s$/i.test(nm)?"es":"s") + "!");
+  const setSpoken = "Three " + nm + (/s$/i.test(nm)?"es":"s");
+  speak((fan.name?fan.name+"! ":"") + (combo>=2?`Combo ${combo}! `:"") + setSpoken + "!");
   if(REDUCE){ toast2(`${fan.avatar} ${esc(fan.name)} scored a set! ${combo>=2?'COMBO x'+combo:''}`); return; }
   const s=$("slam"); if(!s)return;
   const dname = fan.setType==="wild"?"WILDS":esc(cardVisual(fan.setType).label.toUpperCase())+"S";
