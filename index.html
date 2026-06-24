@@ -470,7 +470,7 @@
   <button class="link" id="soloBtn">Just play solo vs the computer →</button>
   <button class="btn warn" id="designBtn" style="margin-top:10px">🎨 Design your cards</button>
   <div style="margin-top:14px"><button class="link" onclick="showProfile()">👤 Profile</button> · <button class="link" onclick="showRules()">How to play</button> · <button class="link" id="themeToggle">🌙 Night mode</button></div>
-  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.6</span></div>
+  <div style="font-size:11px;opacity:.5;margin-top:18px">Based on “What’s The Point?” © 2021 Cactus Card Game LLC · fan digital edition · <span id="verTag">v4.7</span></div>
   <div id="netStatus" style="font-size:12px;margin-top:10px;color:var(--orange);"></div>
 </div>
 
@@ -662,7 +662,12 @@ const BG_THEMES={
 };
 function applyTableBg(key){ const g=$("game"); if(!g)return; const b=BG_THEMES[key]||BG_THEMES.green; g.style.background=b.grad; }
 
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+// Unbiased random int in [0,n) using crypto entropy (falls back to Math.random).
+function _randInt(n){ if(n<=1)return 0;
+  try{ if(typeof crypto!=="undefined"&&crypto.getRandomValues){ const max=Math.floor(4294967296/n)*n; const a=new Uint32Array(1); let x; do{ crypto.getRandomValues(a); x=a[0]; }while(x>=max); return x%n; } }catch(e){}
+  return Math.floor(Math.random()*n); }
+// Fisher–Yates with crypto entropy; shuffle a few passes so the order is thoroughly mixed.
+function shuffle(a){ for(let pass=0;pass<3;pass++)for(let i=a.length-1;i>0;i--){const j=_randInt(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; }
 function rand(a){return a[Math.floor(Math.random()*a.length)];}
 function code4(){let s="";const ch="ABCDEFGHJKMNPQRSTUVWXYZ23456789";for(let i=0;i<4;i++)s+=ch[Math.floor(Math.random()*ch.length)];return s;}
 
@@ -902,6 +907,16 @@ function doStart(isRematch){
   const n=G.players.length;
   G.goal = goalSel==="auto"?goalFor(n):parseInt(goalSel);
   for(let rr=0;rr<hand;rr++)for(const p of G.players)p.hand.push(G.draw.pop());
+  // Fairness: don't let anyone open with an already-complete set (that made round one
+  // an instant scoring race). Reshuffle that hand back into the deck and redraw — bounded.
+  if(G.draw.length >= n){
+    for(const p of G.players){ let tries=0;
+      while(tries<10 && G.draw.length>=hand && bestSet(p)){
+        G.draw.push(...p.hand.splice(0)); shuffle(G.draw);
+        for(let i=0;i<hand;i++)p.hand.push(G.draw.pop()); tries++;
+      }
+    }
+  }
   G.cur=0; G.over=false; G.winner=null; G.started=true; G.log=[]; G.lastAction=null; G.bigEvent=null; G.fanfare=null; G.reqEvent=null; G.takeEvent=null; G.swapEvent=null; G.comboBy=null; G.comboN=0;
   // Auto Grand Champ: if 2+ players are tied at the top with 3+ session wins each
   const wc=G.players.map(p=>G.sessionWins[p.id]||0); const mx=Math.max(0,...wc);
